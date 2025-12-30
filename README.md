@@ -6,7 +6,7 @@
 
 ## Setup
 
- - Verificar as versões de Python no sistema:
+### Versões de Python e pip do sistema:
 
  ```bash
 python --version
@@ -34,17 +34,19 @@ python -V
 ```bash
 pip --version
 ```
- - Configurar o versionador de código (Git e GitHub):
+
+###  Versionador de código (Git e GitHub):
 
 ```bash
 git --version
 git config --global user.name "phmcasimiro"
 git config --global user.email "phmcasimiro@gmail.com"
 ```
+
  - Criar Repositório no GitHub e sincronizar com o repositório local:
 
 ```bash
-# GitHub
+# GitHub - Criação de repositório na Nuvem
 
 # 1. Acessar o GitHub
 <https://github.com/phmcasimiro>
@@ -58,7 +60,7 @@ git config --global user.email "phmcasimiro@gmail.com"
 # 4. Crie o repositório (sem marcar nada em "initialize this repository with...")
 <https://github.com/phmcasimiro/FraudDetection.git>
 
-# Git
+# Git - Sincronização de repositório local com o repositório na Nuvem
 # 1. Inicialize o Git localmente
 git init
 
@@ -79,9 +81,24 @@ git remote add origin https://github.com/phmcasimiro/FraudDetection.git
 git push -u origin main
 ```
 
-## Criar Estrutura de Diretórios
+### Gerenciador de Projetos (GitHub Projects)
+ - O GitHub Projects é uma ferramenta que permite gerenciar projetos de forma colaborativa.
+ - Utilizaremos neste projeto para gerenciar as tarefas de desenvolvimento e construir um histórico de progresso.
 
 ```bash
+# 1. Entrar no GitHub Projects
+<https://github.com/users/phmcasimiro/projects/2>
+
+# 2. Canto superior direito, clicar em "settings"
+<https://github.com/users/phmcasimiro/projects/2/settings>
+
+# 3. Selecionar Default Repository "FraudDetection"
+```
+
+### Estrutura de Diretórios
+
+```bash
+# Linux - Criação de diretórios
 mkdir src
 mkdir src/api
 mkdir src/data
@@ -93,9 +110,10 @@ mkdir artifacts/models
 ```
 
 ## Criar arquivos `__init__.py`
+ - Arquivos .py são considerados módulos em Python, e o arquivo `__init__.py` é um arquivo especial que define um diretório como um pacote Python.
 
 ```bash
-# Linux
+# Linux - Criação de arquivos .py
 touch src/__init__.py
 touch src/api/__init__.py
 touch src/data/__init__.py
