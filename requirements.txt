@@ -8,3 +8,7 @@ ruff==0.1.15
 mypy==1.8.0
 httpx==0.26.0
 scikit-learn==1.4.0
+kagglehub==0.1.0
+pandas == 2.2.3
+seaborn == 0.13.2
+matplotlib == 3.7.2

@@ -8,3 +8,5 @@ logs/*.log
 .env
 *.pkl
 .DS_Store
+src/data/creditcard.csv
+src/data/creditcard.zip

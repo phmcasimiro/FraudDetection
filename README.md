@@ -4,9 +4,9 @@
 
  - Essa é uma API de Machine Learning que usa um modelo de Random Forest para prever fraudes com base em um conjunto de dados de transações de cartão de crédito.
 
-## Setup
+# 1. SETUP
 
-### Versões de Python e pip do sistema:
+## 1.1 Versões de Python e pip do sistema:
 
  ```bash
 python --version
@@ -35,7 +35,7 @@ python -V
 pip --version
 ```
 
-###  Versionador de código (Git e GitHub):
+## 1.2 Versionador de código (Git e GitHub):
 
 ```bash
 git --version
@@ -81,7 +81,7 @@ git remote add origin https://github.com/phmcasimiro/FraudDetection.git
 git push -u origin main
 ```
 
-### Gerenciador de Projetos (GitHub Projects)
+## 1.3 GERENCIADOR DE PROJETOS (GitHub Projects)
  - O GitHub Projects é uma ferramenta que permite gerenciar projetos de forma colaborativa.
  - Utilizaremos neste projeto para gerenciar as tarefas de desenvolvimento e construir um histórico de progresso.
 
@@ -95,7 +95,7 @@ git push -u origin main
 # 3. Selecionar Default Repository "FraudDetection"
 ```
 
-### Estrutura de Diretórios
+## 1.4 ESTRUTURA DE DIRETÓRIOS
 
 ```bash
 # Linux - Criação de diretórios
@@ -108,8 +108,35 @@ mkdir logs
 mkdir artifacts
 mkdir artifacts/models
 ```
+``` bash
+# Estrutura de diretórios FraudDetection
+├── artifacts/
+│   └── models/
+├── logs/
+├── src/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── main.py
+│   ├── data/
+│   │   ├── __init__.py
+│   ├── models/
+│   |   └── __init__.py
+│   ├── schemas/
+│   |   ├── __init__.py
+│   │   └── schemas.py
+│   ├── services/
+│   |   ├── __init__.py
+│   │   └── services.py
+├── tests/
+│   └── __init__.py
+├── .gitignore
+├── requirements.txt
+└── README.md
+```
 
-## Criar arquivos `__init__.py`
+## 1.5 CRIAR ARQUIVOS `__init__.py`
  - Arquivos .py são considerados módulos em Python, e o arquivo `__init__.py` é um arquivo especial que define um diretório como um pacote Python.
 
 ```bash
@@ -121,30 +148,174 @@ touch src/models/__init__.py
 touch tests/__init__.py
 ```
 
+## 1.6 CRIAR ARQUIVOS DE CONFIGURAÇÃO DO PROJETO
 
+**`.gitignore`**
 
+```
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+logs/*.log
+.env
+*.pkl
+.DS_Store
+```
 
+**`requirements.txt`**
+```
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.6.0
+pytest==7.4.3
+pytest-cov==4.1.0
+black==24.1.1
+ruff==0.1.15
+mypy==1.8.0
+httpx==0.26.0
+scikit-learn==1.4.0
+```
+### 1.7 INSTALAR BIBLIOTECAS
+```bash
+pip install -r requirements.txt
+```
 
+### 1.8 TESTE FASTAPI
+ - Criar arquivo **`test_api.py`**
+```bash
+from fastapi import FastAPI
+app = FastAPI()
+@app.get("/")
+def read_root():
+return {"message": "Setup funcionando!"}
+```
+- Executar o arquivo **`test_api.py`**
+```bash
+uvicorn test_api:app --reload
+```
+ - Após o teste, **deletar** arquivo **`test_api.py`**
 
-git config --global user.name "Seu Nome"
-git config --global user.email "seu.email@exemplo.com"
-Verificação:
+### 1.9 VERIFICAÇÃO FINAL DE AMBIENTE
+
+```bash
+python --version
+pip --version
 git --version
-Comandos essenciais que usaremos:
-git clone <url> # Copiar repositório
-git add . # Adicionar mudanças
-git commit -m "mensagem" # Salvar versão
-git push # Enviar para servidor
-git status # Ver estado atual
-1.5 VS Code - Editor de Código
-Download: https://code.visualstudio.com/
-Extensões Essenciais
-Após instalar VS Code, adicione estas extensões:
-Python (Microsoft)
-Busque "Python" no marketplace de extensões
-Clique Install
-Pylance (Microsoft)
-1.
-2.
-3.
-4.
+pip show fastapi
+pip show pytest
+```
+------
+
+### 2. Extração, Ingestão e Análise Exploratória (EDA)
+
+#### 2.1 Extração e Ingestão de Dados
+- Criar um script `src/data/download_data.py` para baixar o dataset mais atualizado .
+
+```bash
+import kagglehub
+import shutil
+import os
+
+def download_dataset():
+    print("Iniciando download do Kaggle...")
+    # Baixa a versão mais recente do dataset
+    path = kagglehub.dataset_download("mlg-ulb/creditcardfraud")
+    
+    # O kagglehub baixa o arquivo .csv para um cache.
+    source_file = os.path.join(path, "creditcard.csv") # Localiza o arquivo .csv baixado
+    destination_path = "src/data/creditcard.csv" # Define o caminho de destino
+    
+    # Move o arquivo para sua pasta de dados do projeto
+    if os.path.exists(source_file):
+        shutil.move(source_file, destination_path)
+        print(f"Dataset movido com sucesso para: {destination_path}")
+    else:
+        print(f"Erro: Arquivo não encontrado em {source_file}")
+
+if __name__ == "__main__":
+    download_dataset()
+```
+
+#### 2.2 Análise Exploratória
+- Antes de começar a codificar a API, é necessário entender os dados. 
+- Verificar a correlação das variáveis `V1` a `V28` e a distribuição da variável alvo `Class`.
+- Criar um script `src/data/eda.py` para implementar uma análise exploratória de dados (EDA) .
+- **OBS:** Serão usadas bibliotecas de visualização que salvam gráficos como arquivos na pasta `artifacts/`.
+
+```bash
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import os
+
+def run_eda():
+    # 1. Carregar os dados
+    df = pd.read_csv("src/data/creditcard.csv")
+    
+    # Criar pasta para salvar gráficos (se não existir)
+    os.makedirs("artifacts", exist_ok=True)
+
+    # 2. Analisar Distribuição da Classe (Target)
+    print("Analisando distribuição de classes...")
+    plt.figure(figsize=(8, 6)) # Define o tamanho da figura
+    sns.countplot(x='Class', data=df) # Cria o gráfico de contagem
+    plt.title("Distribuição: 0 (Normal) vs 1 (Fraude)") # Define o título do gráfico
+    plt.savefig("artifacts/distribuicao_classe.png") # Salva o gráfico
+    
+    # Imprimir proporção no terminal
+    print(df['Class'].value_counts(normalize=True))
+
+    # 3. Analisar Correlação
+    print("Gerando matriz de correlação...")
+    # Calculando correlação de todas as variáveis com a Classe
+    correlations = df.corr()['Class'].sort_values(ascending=False)
+    
+    # Gerar Heatmap das correlações
+    plt.figure(figsize=(12, 10)) # Define o tamanho da figura
+    sns.heatmap(df.corr(), annot=False, cmap='coolwarm') # Cria o heatmap
+    plt.title("Matriz de Correlação Global") # Define o título do gráfico
+    plt.savefig("artifacts/matriz_correlacao.png") # Salva o gráfico
+    
+    print("EDA concluída. Gráficos salvos em /artifacts")
+
+if __name__ == "__main__":
+    run_eda()
+```
+
+#### Por que observar a correlação e a distribuição?
+
+ - **Análise da Distribuição da Variável Alvo (`Class`):**
+	 - A coluna `Class` possui dois valores: **0** (legítima) e **1** (fraude).
+	 - É essencial verificar o balanceamento/desbalanceamento das variáveis, então, usaremos um gráfico de barras para visualizar isso.
+	 - Em fraudes, a classe "1" (fraude) costuma ser uma fração mínima, isto é, há uma barra enorme no 0 e uma quase invisível no 1.
+	 - Em Machine Learning, isso é uma **Classe Desbalanceada**. Caso o modelo seja treinado assim, aprenderá que "quase sempre não é fraude" e ignorará as fraudes reais.
+
+- **Correlação das variáveis `V1` a `V28`:** 
+	- Neste dataset as variáveis `V1` a `V28` são resultado de um **PCA** (Principal Component Analysis).
+	- O PCA transforma variáveis originais em novos componentes que são **independentes** entre si. 
+	- Logo, se fizermos uma matriz de correlação entre as variáveis, a correlação será próxima de zero (0).
+	- O Foco da Análise é a correlação das variáveis com a variável `Class`, ou seja, descobrir quais variáveis `V` têm mais poder preditivo (influência) para determinar fraudes.
+    
+- **Resultados!?**
+
+-  **1. Distribuição da Variável Alvo (`Class`)**
+
+	- Analisando o gráfico `distribuicao_classe.png` é possível verificar uma coluna gigante no valor **0** (Transações Legítimas) e uma quase invisível no valor **1** (Fraudes).
+    
+	-   Em Machine Learning, isto exemplifica o conceito de **Desbalanceamento de Classe Severo**, isto é, no  dataset, menos de 0.2% dos dados são fraude.
+    
+	-   Se o desbalanceamento não for tratado, o modelo de Random Forest aprenderá a sempre classificar como "0" (Transação Legítima), pois ele terá 99.8% de acurácia fazendo isso, mesmo falhando em detectar todas as fraudes.
+	- **Importante:** Vamos focar na métrica **Recall** a fim de não ignorar nenhuma fraude, mesmo que isso gere alguns alarmes falsos (Falsos Positivos).
+
+-  **2. Correlação das Variáveis `V1` a `V28`**
+
+	 - Analisando a `matriz_correlacao.png` é possível notar que as variáveis `V1` a `V28` têm correlação zero entre si (as células do mapa de calor fora da diagonal são neutras).
+
+   -   Isso ocorre porque as variáveis são componentes gerados por **PCA** (Análise de Componentes Principais), uma técnica de engenharia de features que transforma dados correlacionados em componentes independentes.
+
+	-   **Importante:** Faça uma Análise de Variância, isto é, procure por variáveis `V` que tenham correlação (mesmo que baixa) positiva ou negativa com a `Class`. Em outras palavras, verifique quais variáveis possuem maior variação quando a `Class` é 1 vs quando é 0. Essas variáveis serão as mais importantes para o seu modelo de Random Forest. 
+
+	-   Ao analisar a última linha (ou coluna) da matriz, que mostra a correlação com a `Class`. É possivel verificar que algumas variáveis como `V17`, `V14` e `V12` tem correlações negativas fortes com a fraude.
