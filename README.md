@@ -289,7 +289,7 @@ if __name__ == "__main__":
 
  - **Análise da Distribuição da Variável Alvo (`Class`):**
 	 - A coluna `Class` possui dois valores: **0** (legítima) e **1** (fraude).
-	 - É essencial verificar o balanceamento/desbalanceamento das variáveis, então, usaremos um gráfico de barras para visualizar isso.
+	 - É essencial verificar o balanceamento/desbalanceamento das variáveis, então, usaremos um gráfico de barras (Distribuição de Classes) para visualizar isso.
 	 - Em fraudes, a classe "1" (fraude) costuma ser uma fração mínima, isto é, há uma barra enorme no 0 e uma quase invisível no 1.
 	 - Em Machine Learning, isso é uma **Classe Desbalanceada**. Caso o modelo seja treinado assim, aprenderá que "quase sempre não é fraude" e ignorará as fraudes reais.
 
@@ -297,25 +297,42 @@ if __name__ == "__main__":
 	- Neste dataset as variáveis `V1` a `V28` são resultado de um **PCA** (Principal Component Analysis).
 	- O PCA transforma variáveis originais em novos componentes que são **independentes** entre si. 
 	- Logo, se fizermos uma matriz de correlação entre as variáveis, a correlação será próxima de zero (0).
-	- O Foco da Análise é a correlação das variáveis com a variável `Class`, ou seja, descobrir quais variáveis `V` têm mais poder preditivo (influência) para determinar fraudes.
+	- O Foco da Análise é a correlação das variáveis com a variável `Class/Fraude`, ou seja, descobrir quais variáveis `V` têm mais poder preditivo (influência) para determinar fraudes.
     
-- **Resultados!?**
-
 -  **1. Distribuição da Variável Alvo (`Class`)**
 
-	- Analisando o gráfico `distribuicao_classe.png` é possível verificar uma coluna gigante no valor **0** (Transações Legítimas) e uma quase invisível no valor **1** (Fraudes).
+<p align="center">
+  <img src="artifacts/distribuicao_classe.png" alt="Distribuição de Classes" width="600">
+</p>
+
+- Analisando o gráfico `distribuicao_classe.png` é possível verificar uma coluna gigante no valor **0** (Transações Legítimas) e uma quase invisível no valor **1** (Fraudes).
     
-	-   Em Machine Learning, isto exemplifica o conceito de **Desbalanceamento de Classe Severo**, isto é, no  dataset, menos de 0.2% dos dados são fraude.
+-   Em Machine Learning, isto exemplifica o conceito de **Desbalanceamento de Classe Severo**, isto é, no  dataset, menos de 0.2% dos dados são fraude.
     
-	-   Se o desbalanceamento não for tratado, o modelo de Random Forest aprenderá a sempre classificar como "0" (Transação Legítima), pois ele terá 99.8% de acurácia fazendo isso, mesmo falhando em detectar todas as fraudes.
-	- **Importante:** Vamos focar na métrica **Recall** a fim de não ignorar nenhuma fraude, mesmo que isso gere alguns alarmes falsos (Falsos Positivos).
+-   Se o desbalanceamento não for tratado, o modelo de Random Forest aprenderá a sempre classificar como "0" (Transação Legítima), pois ele terá 99.8% de acurácia fazendo isso, mesmo falhando em detectar todas as fraudes.
+   
+- **Importante:** Vamos focar na métrica **Recall** a fim de não ignorar nenhuma fraude, mesmo que isso gere alguns alarmes falsos (Falsos Positivos).
+
+
 
 -  **2. Correlação das Variáveis `V1` a `V28`**
 
-	 - Analisando a `matriz_correlacao.png` é possível notar que as variáveis `V1` a `V28` têm correlação zero entre si (as células do mapa de calor fora da diagonal são neutras).
+<p align="center">
+  <img src="artifacts/matriz_correlacao.png" alt="Correlação das Variáveis" width="600">
+</p>
 
-   -   Isso ocorre porque as variáveis são componentes gerados por **PCA** (Análise de Componentes Principais), uma técnica de engenharia de features que transforma dados correlacionados em componentes independentes.
+- O gráfico utiliza uma **escala de cores** para demonstrar a **força da relação entre as variáveis**.
 
-	-   **Importante:** Faça uma Análise de Variância, isto é, procure por variáveis `V` que tenham correlação (mesmo que baixa) positiva ou negativa com a `Class`. Em outras palavras, verifique quais variáveis possuem maior variação quando a `Class` é 1 vs quando é 0. Essas variáveis serão as mais importantes para o seu modelo de Random Forest. 
+- **Vermelho Forte** indica uma **correlação positiva perfeita (valor 1)**, isto é, quando uma variável aumenta, a outra também aumenta. Por isso há uma **linha vermelha na diagonal principal**, a qual representa a **correlação de uma variável consigo mesma**.
 
-	-   Ao analisar a última linha (ou coluna) da matriz, que mostra a correlação com a `Class`. É possivel verificar que algumas variáveis como `V17`, `V14` e `V12` tem correlações negativas fortes com a fraude.
+- **Azul Forte** indica uma **correlação negativa forte (valor -1)**, isto é, quando uma variável aumenta, a outra tende a diminuir.
+
+- **Cores Claras/Neutras** Indicam **correlações fracas ou nulas (valor 0)**, ou seja, as variáveis apresentam comportamento independente entre si.
+
+- O **Centro do gráfico** é marcado por cores neutras e azul clara, isto é, as variáveis não possuem correlação entre si em razão da técnica PCA aplicada ao conjunto de dados. Em outras palavras, as variáveis `V1` a `V28` têm correlação zero entre si (as células do mapa de calor fora da diagonal são neutras em sua maioria). A razão desse fenômeno é a aplicação da técnica **PCA** (Análise de Componentes Principais), uma técnica de engenharia de features que transforma dados correlacionados em componentes independentes.
+
+- A análise de variância é uma técnica estatística que permite avaliar a variação de uma variável em relação a outra variável. Em outras palavras, verifica-se quais variáveis possuem maior variação quando a `Class/Fraude` é `1` e quando é `0`. Essas variáveis serão as mais importantes para o seu modelo de Random Forest.
+
+Ao analisar a última linha (ou coluna) da matriz, que mostra a correlação com a `Class/Fraude`, verificamos que as variáveis `V17`, `V14` e `V12` apresentam correlações negativas relativamente fortes com a `Class/Fraude`. 
+
+
