@@ -1,0 +1,24 @@
+# docker-compose.yml
+# Criado por phmcasimiro
+# Data: 2026-01-09
+
+version: '3.8'
+
+services:
+  app:
+    build: . # Indica ao Compose para usar o Dockerfile da pasta atual.
+
+    container_name: fraud_detection_container # Nome do container.
+
+    # Sincronização em tempo real (Volumes)
+    volumes:
+      - .:/app # O ponto (.) é a máquina local, e /app é o container. Agora, qualquer vírgula atualizada no VS Code/Editor será refletida instantaneamente dentro do container Docker.
+
+    stdin_open: true # Mantém o container aberto para comandos interativos
+
+    tty: true # Mantém o container aberto para comandos interativos
+
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
