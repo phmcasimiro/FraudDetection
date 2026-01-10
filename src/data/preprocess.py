@@ -7,17 +7,21 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import RobustScaler
 import os
+from src.data.pandera_schemas import validar_dados
 
-# Função para executar o pré-processamento
+# -------------------------------------------------------------------------
+# ITEM 4: FUNÇÃO DE PRÉ-PROCESSAMENTO DOS DADOS
+# -------------------------------------------------------------------------
 def executar_pre_processamento(): 
-    # Define o caminho do dataset baixado na etapa anterior
+    
+    # Definir o caminho do dataset
     path_raw_data = "src/data/creditcard.csv"
-    # Verifica se o arquivo existe
+    # Verificar se o arquivo existe
     if not os.path.exists(path_raw_data):
         print("Erro: Arquivo creditcard.csv não encontrado. Rode o download primeiro.")
         return
 
-    # Carrega o dataset
+    # Carregar o dataset
     df = pd.read_csv(path_raw_data)
     print(f"Dataset carregado com {df.shape[0]} linhas.")
 
@@ -25,7 +29,7 @@ def executar_pre_processamento():
     # ITEM 4.1: VERIFICAÇÃO DE INTEGRIDADE (DATA CLEANING)
     # -------------------------------------------------------------------------
     
-    # Verificando valores nulos
+    # Remover valores nulos
     nulos = df.isnull().sum().sum() # Soma todos os valores nulos do dataset
     if nulos > 0:
         print(f"Limpando {nulos} valores nulos...") # Informa quantos valores nulos foram removidos
@@ -33,11 +37,20 @@ def executar_pre_processamento():
     else:
         print("Integridade confirmada: Nenhum valor nulo encontrado.")
 
-    # Remoção de Duplicatas
+    # Remover Duplicatas
     duplicados = df.duplicated().sum() # Soma todos os valores duplicados do dataset
     if duplicados > 0:
         print(f"Removendo {duplicados} transações duplicadas para evitar overfitting...")
         df = df.drop_duplicates() # Remove as linhas duplicadas
+
+    # Validar com Pandera
+    try:
+        print("Validando integridade estatística com Pandera...")
+        df = validar_dados(df) # Agora a variável df existe e está limpa
+        print("Dados validados pelo Pandera com sucesso!")
+    except Exception as e:
+        print(f"Erro na validação de dados: {e}")
+        return
     
     # -------------------------------------------------------------------------
     # ITEM 4.2: ESCALONAMENTO DE ATRIBUTOS (FEATURE SCALING)
