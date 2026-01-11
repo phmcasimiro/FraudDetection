@@ -97,7 +97,7 @@ git config --global user.email "phmcasimiro@gmail.com"
 
  - Criar Repositório no GitHub e sincronizar com o repositório local:
 
-```bash
+```python
 # GitHub - Criação de repositório na Nuvem
 
 # 1. Acessar o GitHub
@@ -266,7 +266,7 @@ pip show pytest
 #### 2.1 Extração e Ingestão de Dados
 - Criar um script `src/data/download_data.py` para baixar o dataset mais atualizado .
 
-```bash
+```python
 import kagglehub
 import shutil
 import os
@@ -297,7 +297,7 @@ if __name__ == "__main__":
 - Criar um script `src/data/eda.py` para implementar uma análise exploratória de dados (EDA) .
 - **OBS:** Serão usadas bibliotecas de visualização que salvam gráficos como arquivos na pasta `artifacts/`.
 
-```bash
+```python
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -420,7 +420,8 @@ Ao analisar a última linha (ou coluna) da matriz, que mostra a correlação com
 
 - A documentação desta etapa encontra-se em no [GitHub Projetcs FraudDetection - Task: Qualidade dos Dados](https://github.com/users/phmcasimiro/projects/2/views/1?pane=issue&itemId=148208864&issue=phmcasimiro%7CFraudDetection%7C9)
 
-``` bash
+``` python
+# src/data/pandera_schemas.py
 # Project: Fraud Detection
 # author: phmcasimiro
 # date: 2026-01-07
@@ -569,7 +570,7 @@ Este arquivo é o **produto** do treinamento e será carregado na API em produç
 `script train.py`
 
 
-```bash
+```python
 # train.py
 # Treinamento do modelo com técnica híbrida SMOTE + Tomek Links
 # Elaborado por: phmcasimiro
@@ -691,22 +692,19 @@ if __name__ == "__main__":
 
 OBS: VN = Verdadeiro Negativo, FP = Falso Positivo, FN = Falso Negativo, VP = Verdadeiro Positivo
 
-#### **TAREFAS/ETAPAS**
+- **TAREFAS/ETAPAS**
 
-    1. Escrever o README.md
-    - Implementar o README.md (***README.md***), explicando o projeto, as etapas e as tarefas.
-
-    2. Criar Script de Avaliação do Modelo
+    1. Criar Script de Avaliação do Modelo
     - Implementar o script (***src/models/evaluation.py***), carregar o modelo treinado (***artifacts/models/model.pkl***), carregar os dados de teste (***src/data/X_test.csv*** e ***src/data/y_test.csv***) e avaliar o desempenho do modelo.
 
-    3. Gerar Matriz de Confusão Visual
+    2. Gerar Matriz de Confusão Visual
     - Utilizar matplotlib/seaborn para salvar um gráfico da matriz de confusão em artifacts/.
 
-    4. Calcular Métricas de Avaliação (Precision, Recall, F1-Score, Acurácia, AUC-ROC)
+    3. Calcular Métricas de Avaliação (Precision, Recall, F1-Score, Acurácia, AUC-ROC)
     - Gerar o relatório técnico de métricas focando na classe 1 (Fraudes).
     - Salvar o relatório técnico em artifacts/.
 
-    5. Analisar Curva Precision-Recall
+    4. Analisar Curva Precision-Recall
     - Avaliar o equilíbrio entre bloquear fraudes e não bloquear transações legítimas.
     - Salvar o gráfico da curva precision-recall em artifacts/. 
 
@@ -770,7 +768,7 @@ OBS: VN = Verdadeiro Negativo, FP = Falso Positivo, FN = Falso Negativo, VP = Ve
 
 `evaluate.py`
 
-```bash
+```python
 # evaluate.py
 # Avaliação e Validação do modelo treinado
 # Elaborado por: phmcasimiro
@@ -837,6 +835,9 @@ def avaliar_modelo():  # Avaliação e Validação do modelo treinado
     output_dir = "artifacts/evaluation"
     os.makedirs(output_dir, exist_ok=True)
 
+    # Gerar timestamp para versionamento dos artefatos
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     if not all(os.path.exists(p) for p in [model_path, X_test_path, y_test_path]):
         logger.error(
             "Arquivos necessários não encontrados. Verifique o treino e o pré-processamento."
@@ -859,19 +860,21 @@ def avaliar_modelo():  # Avaliação e Validação do modelo treinado
         report = classification_report(y_test, y_pred)  # Gera relatório de métricas
         logger.info("\n" + report)
 
-        # Salvar relatório em texto
-        with open(f"{output_dir}/metrics_report.txt", "w") as f:
+        # Salvar relatório em texto com timestamp
+        report_filename = f"{output_dir}/metrics_report_{timestamp}.txt"
+        with open(report_filename, "w") as f:
             f.write(report)
+        logger.info(f"Relatório salvo em: {report_filename}")
 
         # 4. MATRIZ DE CONFUSÃO VISUAL
         logger.info("Gerando Matriz de Confusão...")
         cm = confusion_matrix(y_test, y_pred)  # Gera matriz de confusão
         plt.figure(figsize=(8, 6))  # Define o tamanho da figura
         sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)  # Gera heatmap
-        plt.title("Matriz de Confusão - Detecção de Fraude")  # Define o título
+        plt.title(f"Matriz de Confusão - {timestamp}")  # Define o título
         plt.xlabel("Predição do Modelo")  # Define o eixo x
         plt.ylabel("Valor Real (Gabarito)")  # Define o eixo y
-        plt.savefig(f"{output_dir}/confusion_matrix.png")  # Salva a imagem
+        plt.savefig(f"{output_dir}/confusion_matrix_{timestamp}.png")  # Salva a imagem
         plt.close()
 
         # 5. CURVA ROC E AUC
@@ -889,9 +892,9 @@ def avaliar_modelo():  # Avaliação e Validação do modelo treinado
         )  # Plota a curva ROC
         plt.xlabel("Taxa de Falsos Positivos (1 - Especificidade)")  # Define o eixo x
         plt.ylabel("Taxa de Verdadeiros Positivos (Recall)")  # Define o eixo y
-        plt.title("Curva ROC")  # Define o título
+        plt.title(f"Curva ROC - {timestamp}")  # Define o título
         plt.legend()  # Plota a legenda
-        plt.savefig(f"{output_dir}/roc_curve.png")  # Salva a imagem
+        plt.savefig(f"{output_dir}/roc_curve_{timestamp}.png")  # Salva a imagem
         plt.close()
 
         logger.info(f"Avaliação concluída! Resultados salvos em: {output_dir}")
@@ -903,7 +906,6 @@ def avaliar_modelo():  # Avaliação e Validação do modelo treinado
 
 if __name__ == "__main__":
     avaliar_modelo()
-
 ```
 
 #### RESULTADOS
@@ -936,7 +938,7 @@ if __name__ == "__main__":
     - **Conclusão da Matriz:** O modelo conseguiu capturar a grande maioria das fraudes (77 de 95 totais no teste), mantendo um número muito baixo de clientes legítimos incomodados por alarmes falsos.
 
 <p align="center">
-  <img src="artifacts/evaluation/confusion_matrix.png" alt="Matriz de Confusão" width="600">
+  <img src="artifacts/evaluation/confusion_matrix_20260111_121048.png" alt="Matriz de Confusão" width="600">
 </p>
 
 - **CURVA ROC:**
@@ -950,7 +952,7 @@ if __name__ == "__main__":
     - **Valor AUC = 0.9786:** A área sob a curva (AUC) é de quase 98%. Significa que se analisarmos, aleatoriamente, uma transação fraudulenta e uma legítima, há 97,86% de chance do modelo atribuir uma pontuação de risco maior para a fraude.
 
 <p align="center">
-  <img src="artifacts/evaluation/roc_curve.png" alt="Curva ROC" width="600">
+  <img src="artifacts/evaluation/roc_curve_20260111_121048.png" alt="Curva ROC" width="600">
 </p>
 
 ### 7. **INFRAESTRUTURA E PORTABILIDADE (DOCKER)**
@@ -1078,20 +1080,34 @@ services:
 - `docker build -t fraud-detection-app .`
     - Cria a **Imagem** (a "foto" estática) do seu projeto a partir do Dockerfile.
 
-#### 7.2.2 **Execução (Run)**
+#### 7.2.2 **Execução (Run) e Parada (Down)**
 - `docker run -it fraud-detection-app`
     - Cria e inicia um container isolado baseado na imagem. **Não** tem sincronização de arquivos (se mudar o código, ele não vê).
+- `docker-compose down`: 
+    - Para e remove o container.
 
 - `docker-compose up --build -d`
     - Constrói a imagem (se tiver mudanças), cria o container com as configurações do [docker-compose.yml](cci:7://file:///home/pedro/Documentos/Projects/FraudDetection/docker-compose.yml:0:0-0:0) (incluindo o espelho/volume) e deixa rodando em segundo plano.
 
 #### 7.2.3 **Gerenciamento**
-- `docker images`: Lista todas as imagens salvas no seu computador.
-- `docker rmi <image_id>`: Apaga uma imagem do disco.
-- `docker ps`: Lista os containers que estão rodando agora.
-- `docker ps -a`: Lista todos os containers (inclusive os parados/desligados).
-- `docker stop <container_id>`: Desliga um container suavemente.
-- `docker rm <container_id>`: Apaga um container parado.
+- `docker images`
+    - Lista todas as imagens salvas no seu computador.
+- `docker rmi <image_id>`
+    - Apaga uma imagem do disco.
+- `docker ps`
+    - Lista os containers que estão rodando agora.
+- `docker ps -a`
+    - Lista todos os containers (inclusive os parados/desligados).
+- `docker stop <container_id>`
+    - Desliga um container suavemente.
+- `docker rm <container_id>`
+    - Apaga um container parado.
+
+#### 7.2.4 **Logs**
+- `docker logs <container_id>`
+    - Exibe os logs de um container.
+- `docker-compose logs -f app`
+    - Exibe os logs do container "app" em tempo real.
 
 
 ```bash
@@ -1111,24 +1127,561 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 
 ### 8. **Deploy do Modelo (Produção)**
 
-Nesta etapa, transformaremos o modelo estático (`model.pkl`) em um serviço web acessível (API), permitindo que sistemas externos enviem transações e recebam previsões de fraude em tempo real.
+- No ponto de **Deploy** há uma transição do trabalho de um Cientista de Dados para um Engenheiro de Machine Learning. Nesta etapa, transformaremos o modelo estático `model.pkl` em um serviço web acessível (API), ou seja, colocaremos o modelo de **desenvolvimento** em **produção**, permitindo que sistemas externos (bancos) enviem transações e recebam previsões de fraude em tempo real.
 
-#### **TAREFAS/ETAPAS**
+- Sem o Deploy, o modelo de ML é apenas um arquivo inútil. Com o Deploy, o modelo se torna um serviço web acessível via API.
 
-1.  **Criação da API (FastAPI):**
-    -   Implementar `src/api/main.py` utilizando o framework **FastAPI**.
-    -   Criar um endpoint `POST /predict` que recebe os dados da transação (JSON).
-    -   Integrar o pipeline de pré-processamento (Pandera + Scaler) dentro da API para tratar os dados recebidos antes da predição.
+#### 8.1 Panorama Geral do Deploy
 
-2.  **Testes Automatizados (QA):**
-    -   Implementar testes unitários e de integração com **pytest**.
-    -   Garantir que a API responda corretamente a dados válidos e trate erros para dados inválidos (ex: valores negativos).
+**1 - Contrato/Schemas Pydantic**
+    - Arquivo `src/schemas/schemas.py` garante que a API só receba dados no formato esperado, evitando erros devido a dados inválidos. 
 
-3.  **Containerização da API:**
-    -   Atualizar o `Dockerfile` e `docker-compose.yml` para expor a porta da API (ex: 8000).
-    -   Garantir que o serviço suba automaticamente pronto para receber requisições.
+**2 - Services**
+    - Arquivo `src/services/services.py` implementa a lógica de negócio (predição de fraude). Este script é uma interface entre as chamadas da internet na API e o modelo Estatístico de machine learning.
 
-### 9. **Monitoramento e Manutenção (MLOps)**
+**3 - FastAPI**
+    - Arquivo `src/api/main.py` implementa a API utilizando o framework **FastAPI**. É o servidor que fica "ouvindo" a internet. Quando recebe uma requisição de predição, ele valida com o Schema e chama a função de predição.
+
+**4 - Servidor de Aplicação (Uvicorn)**
+    - O FastAPI cria a lógica, mas o **Uvicorn** é o servidor ASGI de alta performance que gerencia as conexões de rede, processos paralelos (workers) e garante que a API aguente milhares de requisições simultâneas.
+
+**5 - Docker**
+    - Atualizar a `Dockerfile` e `docker-compose.yml` para expor a porta da API (ex: 8000).
+    - Garantir que o serviço suba automaticamente pronto para receber requisições.
+
+**6 - CI/CD (Testes Automatizados)**
+    - Implementar testes unitários e de integração com **pytest**.
+    - Garantir que a API responda corretamente a dados válidos e trate erros para dados inválidos (ex: valores negativos) antes de adicionar camadas de segurança.
+
+**7 - Segurança e Autenticação**
+    - Implementação de barreiras de segurança (como API Keys ou OAuth2) para garantir que apenas clientes autorizados (ex: o sistema do banco) possam enviar transações para análise, protegendo o modelo contra uso indevido.
+
+#### 8.2 Exemplo API FraudDetection
+
+- Se um sistema bancário enviar um JSON para a API:
+
+```json
+{ "Time": 1024, "V1": -1.2, ..., "Amount": 5000.0 }
+```
+
+- A API valida os dados com o Schema, chama a função de predição e retorna um JSON com o resultado:
+
+```json
+{ "is_fraud": 1, "probability": 0.98, "status": "ALTO RISCO" }
+```
+
+#### 8.3 - Schemas (Pydantic)
+
+- O Pydantic é uma biblioteca que ajuda a validar e converter dados em Python. Ele é comumente usado para validar dados de entrada e saída em APIs.
+
+- O arquivo `src/schemas/schemas.py` define os contratos de entrada e saída da API. Em APIs, o cliente e o servidor precisam concordar exatamente com o formato dos dados ou nada funciona.
+
+- ***TransactionInput***: Define o formato de entrada da API.
+- ***PredictionOutput***: Define o formato de saída da API.
+    - Herança `BaseModel`: Ao herdar de BaseModel, o Pydantic automaticamente transforma o JSON que chega na API em um objeto Python e valida os tipos de dados.
+    - `Field`: Ajuda a documentar os dados e fornece exemplos.
+    - `...`: Indica que o campo é obrigatório.
+    - `description`: Ajuda a documentar os dados e fornece exemplos.
+    - `example`: Ajuda a documentar os dados e fornece exemplos.
+    - `ge`: Indica que o campo deve ser maior ou igual a um valor.
+    - `nullable`: Indica que o campo pode ser nulo.
+
+```python
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class TransactionInput(BaseModel):
+    """
+    Schema de entrada para uma única transação de cartão de crédito.
+    Inclui as 30 features que o modelo Random Forest espera.
+    """
+    Time: float = Field(..., description="Segundos decorridos desde a primeira transação", example=406.0)
+    V1: float = Field(..., example=-1.359807)
+    V2: float = Field(..., example=-0.072781)
+    V3: float = Field(..., example=2.536347)
+    V4: float = Field(..., example=1.378155)
+    V5: float = Field(..., example=-0.338321)
+    V6: float = Field(..., example=0.462388)
+    V7: float = Field(..., example=0.239599)
+    V8: float = Field(..., example=0.098698)
+    V9: float = Field(..., example=0.363787)
+    V10: float = Field(..., example=0.090794)
+    V11: float = Field(..., example=-0.551600)
+    V12: float = Field(..., example=-0.617801)
+    V13: float = Field(..., example=-0.991390)
+    V14: float = Field(..., example=-0.311169)
+    V15: float = Field(..., example=1.468177)
+    V16: float = Field(..., example=-0.470401)
+    V17: float = Field(..., example=0.207971)
+    V18: float = Field(..., example=0.025791)
+    V19: float = Field(..., example=0.403993)
+    V20: float = Field(..., example=0.251412)
+    V21: float = Field(..., example=-0.018307)
+    V22: float = Field(..., example=0.277838)
+    V23: float = Field(..., example=-0.110474)
+    V24: float = Field(..., example=0.066928)
+    V25: float = Field(..., example=0.128539)
+    V26: float = Field(..., example=-0.189115)
+    V27: float = Field(..., example=0.133558)
+    V28: float = Field(..., example=-0.021053)
+    Amount: float = Field(..., ge=0, description="Valor da transação (deve ser >= 0)", example=149.62)
+
+class PredictionOutput(BaseModel):
+    """
+    Schema de saída da API com o resultado da classificação.
+    """
+    is_fraud: int = Field(..., description="0 para Legítima, 1 para Fraude")
+    probability: float = Field(..., description="Probabilidade da transação ser fraude")
+    status: str = Field(..., description="Mensagem descritiva do resultado")
+```
+
+##### Resumo do Fluxo: 
+JSON Externo ➡️ TransactionInput (Validação) ➡️ Predictor (ML) ➡️ PredictionOutput (Resposta)
+
+#### 8.4 Serviço de Predição
+
+- O script `src/services/services.py` contém a lógica de predição. Seu objetivo é carregar o modelo de detecção de fraude uma única vez e oferecer uma função que recebe os dados da API e devolve a classficação.
+
+##### 8.4.1 Considerações sobre o script de Predição
+
+- **Carregamento Único (In-Memory)**: O ***joblib.load*** está dentro do ***__init__*** a fim de que o modelo seja carregado uma única vez na RAM, quando a API for implementada em produção. Isso evita carregar o modelo do disco a cada nova transação, o que levaria muito tempo. 
+
+- **model_dump()**: Esse método do Pydantic transforma o objeto JSON que a API recebeu em um dicionário Python puro, que o Pandas aceita facilmente para criar o DataFrame.
+
+- **Probabilidade vs Classe**: O modelo de detecção de fraude (Random Forest) não classifica em 0 ou 1, legítima ou fraude. Ele gera um percentual de probabilidade de fraude, por exemplo, _"92% de certeza que é fraude"_. Para sistemas financeiros, esse número é mais valioso que o 0 ou 1 seco.
+
+```python
+# predictor.py
+# Arquivo com a lógica de predição
+# Elaborado por phmcasimiro
+# Data: 10/01/2026
+
+
+import joblib
+import pandas as pd
+import logging
+from src.schemas.schemas import TransactionInput
+
+# Configurar logs para rastrear o que acontece na predição
+logger = logging.getLogger(__name__)
+
+class FraudPredictor:
+    def __init__(self, model_path: str = "artifacts/models/model.pkl"):
+        """
+        Ao iniciar, o serviço carrega o modelo para a memória.
+        Isso evita ler o arquivo do disco a cada nova transação.
+        """
+        try:
+            self.model = joblib.load(model_path)
+            logger.info(f" Modelo carregado com sucesso de: {model_path}")
+        except Exception as e:
+            logger.error(f"Erro ao carregar o modelo: {e}")
+            raise e
+
+    def predict(self, data: TransactionInput):
+        """
+        Recebe os dados validados pelo Pydantic, transforma em DataFrame
+        e solicita a predição ao Random Forest.
+        """
+        # 1. Converter o objeto Pydantic em um dicionário e depois em DataFrame
+        df_input = pd.DataFrame([data.model_dump()])
+
+        # 2. Realizar a predição de classe (0 ou 1)
+        prediction = self.model.predict(df_input)[0] # 0 (Legítima) ou 1 (Fraude)
+
+        # 3. Calcular a probabilidade de ser fraude
+        # [0, 1] -> [Legítima, Fraude] -> Utilizou-se o índice 1 que é a probabilidade de ser fraude
+        probability = self.model.predict_proba(df_input)[0][1]
+
+        # 4. Definir uma mensagem de status baseada na probabilidade
+        if probability > 0.8:
+            status = "Risco Crítico: Bloqueio Imediato"
+        elif probability > 0.5:
+            status = "Risco Moderado: Requer Análise Humana"
+        else:
+            status = "Transação Aprovada"
+
+        return {
+            "is_fraud": int(prediction),
+            "probability": float(probability),
+            "status": status
+        }
+
+# Instância única (Singleton) para ser usada pela API
+predictor = FraudPredictor()
+```
+#### 8.5 API (FastAPI)
+
+- **O que é uma API?**
+    - API (Application Programming Interface) é um conjunto de regras que permite que diferentes softwares se comuniquem. No caso desta API, é a interface que viabiliza um site ou aplicativo enviar dados de uma transação e receber resposta se a transação é fraude ou legítima, sem precisar conhecer o código complexo do modelo.
+
+- **O que é o FastAPI?**
+    - É um framework moderno e de alta performance para construção de APIs em Python. É extremamente rápido (comparável a NodeJS e Go), fácil de usar e gera automaticamente a documentação interativa (Swagger UI), o que facilita os testes.
+
+- **O que é o Uvicorn?**
+    - Uvicorn é um servidor ASGI (Asynchronous Server Gateway Interface) para aplicações FastAPI. Ele é responsável por receber as requisições HTTP e enviar as respostas para o cliente.
+
+- **Implementação da API (FastAPI) e do Servidor de Aplicações (Uvicorn)?**
+    - A API (FastAPI) foi configurada no arquivo `src/api/main.py`.
+    - O Servidor de Aplicação (Uvicorn) foi configurado no arquivo `src/api/main.py`, mas iniciado dentro do container Docker no arquivo `docker-compose.yml` com Hot-Reload ativado.
+
+```python
+# src/api/main.py
+# API Principal usando FastAPI
+# Elaborado por phmcasimiro
+# Data: 10/01/2026
+
+from fastapi import FastAPI, HTTPException
+from src.schemas.schemas import TransactionInput, PredictionOutput
+from src.services.predictor import predictor
+import logging
+
+# Configurar Logs da API
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("api")
+
+# Inicializar App
+app = FastAPI(
+    title="API Detecção de Fraudes",
+    description="API para detecção de fraudes em transações de cartão de crédito.",
+    version="1.0.0",
+)
+# Endpoint de Health Check
+@app.get("/", tags=["Health Check"])
+def read_root():
+    """
+    Endpoint raiz para verificar se a API está online.
+    """
+    return {"message": "API Detecção de Fraudes está online!", "status": "online"}
+
+# Endpoint de Predição
+@app.post("/predict", response_model=PredictionOutput, tags=["Prediction"])
+def predict_fraud(transaction: TransactionInput):
+    """
+    Endpoint para predição de fraude.
+    Recebe dados da transação e retorna probabilidade de ser fraude.
+    """
+    try:
+        logger.info("Recebendo nova transação para análise.")
+        result = predictor.predict(transaction)
+        logger.info(f"Predição realizada com sucesso: {result['status']}")
+        return result
+    except Exception as e:
+        logger.error(f"Erro durante a predição: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erro interno no servidor: {str(e)}"
+        )
+
+```
+- **Configuração do Docker**
+    - O Docker foi configurado no arquivo `docker-compose.yml`.
+    - O Uvicorn foi configurado no arquivo `src/api/main.py`, mas iniciado dentro do container Docker no arquivo `docker-compose.yml` com Hot-Reload ativado.
+
+```bash
+# docker-compose.yml
+# Criado por phmcasimiro
+# Data: 2026-01-09
+
+version: '3.8'
+
+services:
+  app:
+    build: . # Indica ao Compose para usar o Dockerfile da pasta atual.
+
+    container_name: fraud_detection_container # Nome do container.
+
+    # Sincronização em tempo real (Volumes)
+    #Atualizações nos diretórios e scripts serão refletida instantaneamente no container Docker.
+    volumes:
+      - .:/app # O ponto (.) é máquina local, e /app é o container. 
+      
+    stdin_open: true # Mantém o container aberto para comandos interativos
+
+    tty: true # Mantém o container aberto para comandos interativos
+
+    # Expor a porta da API (Host:Container)
+    ports:
+      - "8000:8000"
+
+    # Comando para iniciar a API com Uvicorn (Reload ativado para dev)
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+
+```
+
+- **Como subir a API?**
+    - Com o `docker-compose.yml` configurado, basta rodar:
+    ```bash
+    docker-compose up --build -d
+    ```
+    - Isso constrói a imagem e inicia o servidor Uvicorn na porta 8000.
+
+- **Visualizando Logs:**
+    - Para ver o que está acontecendo (ex: "Recebendo nova transação..."), use:
+    ```bash
+    docker-compose logs -f app
+    ```
+    - O `-f` (follow) faz com que os logs apareçam em tempo real.
+
+- **Testar o Reload Automático (Hot-Reload):**
+    - O Docker foi configurado com um "espelho" (Volume). Caso o arquivo `src/api/main.py` seja editado e salvo, por exemplo, com uma alteração da mensagem de status de `"online"` para `"rodando"` (linha 27), o terminal de logs mostrará que o Uvicorn detecta a mudança e reinicia a API automaticamente, mostrando o log no terminal.
+
+- **Sair dos Logs:**
+    - Pressione `Ctrl + C`. 
+    - Para de exibir os logs, mas o container continua rodando em segundo plano.
+
+- **Testar com Swagger UI:**
+    1.  Acesse `http://localhost:8000/docs` no seu navegador.
+    2.  Você verá a documentação automática.
+    3.  Clique no endpoint `POST /predict` -> `Try it out`.
+    4.  Edite o JSON de exemplo e clique em `Execute`.
+    5.  A API processará os dados e retornará a previsão (fraude ou legítima) logo abaixo. 
+
+
+#### 8.6 CI/CD (Testes Automatizados)
+
+- **Panorama Geral sobre CI/CD**
+    - De acordo com as boas práticas de desenvolvimento atuais, não basta apenas escrever código, é necessário garantir que o software esteja funcionando a cada edição, na sua conclusão e em cada alteração. O CI/CD (Continuous Integration/Continuous Delivery) é a esteira automática que valida e entrega do código.
+    - No contexto de Machine Learning (MLOps), isso se torna ainda mais crítico porque há três variáveis que podem sofrer mudanças: Código, Dados e Modelo.
+- **CI (Continuous Integration - Integração Contínua):** É a prática de integrar mudanças de código frequentemente. A cada "Save" ou "Push" para o repositório, um robô roda todos os testes automaticamente. Se algo não funcionar como planejado, o desenvolvedor é recebe um warning na hora.
+- **CD (Continuous Delivery/Deployment - Entrega Contínua):** É a automação do deploy. Se os testes do CI passarem, o sistema atualiza a API em produção automaticamente, sem intervenção humana.
+- **Testes Automatizados:** São scripts que "fingem" ser um usuário para verificar se o sistema está funcionando.
+    - *Unitários:* Testam uma função isolada (ex: "A função de soma retorna 4 para 2+2?").
+    - *Integração:* Testam se as partes conversam bem (ex: "A API recebe o JSON e o Modelo devolve a predição?").
+
+- **A Importância para Engenharia de Software em ML**
+    1.  **Confiabilidade:** Evita que um erro bobo de código (bug) derrube o sistema de detecção de fraudes em produção, o que poderia causar prejuízo financeiro real.
+    2.  **Agilidade:** Permite que o Cientista de Dados melhore o modelo e coloque em produção em minutos, com segurança, ou seja, sem intervenção humana.
+    3.  **Documentação Viva:** Os testes devem simular exatamente como o sistema deve se comportar. Se o teste espera receber um `float`, isso pode ser interpretado como uma documentação de que o campo deve ser do tipo `float`.
+
+##### 8.6.1 Testes Automatizados
+
+- O script de testes está em `tests/test_api.py`
+- Utiliza a biblioteca `pytest` e o `TestClient` do FastAPI para simular requisições HTTP e testar a API
+
+- `TestClient(app)`: Neste trecho o FastAPI cria um "navegador virtual" (client), que permite enviar requisições para a API (app) sem precisar executar o servidor (sem uvicorn, sem docker), ou seja, é uma operação simulada na memória, tornando o teste ultra-rápido.
+
+```python
+from fastapi.testclient import TestClient
+from src.api.main import app
+
+# Cliente de teste do FastAPI (simula requisições HTTP)
+client = TestClient(app)
+```
+
+- `test_health_check():` Testa se a API está funcionando (online).
+
+```python
+def test_health_check():
+    """
+    Testa se o endpoint raiz (/) retorna 200 OK e status online.
+    """
+    response = client.get("/")  # Simula alguém acessando http://localhost:8000/
+    
+    # Assert (Afirmação): Espera um código de status 200 (OK), se não, o teste falha
+    assert response.status_code == 200  
+    
+    # Verificar se o JSON retornado é EXATAMENTE o que esperamos
+    assert response.json() == {
+        "message": "API Detecção de Fraudes está online!",
+        "status": "online",
+    }
+```
+
+- `test_predict_legitimate_transaction():` Testa uma transação legítima que deve ser processada com sucesso (200 OK).
+
+```python
+def test_predict_legitimate_transaction():
+    # Payload de teste (transação normal)
+    payload = {
+        "Time": 406.0,
+        "V1": -1.359807,
+        "V2": -0.072781,
+        "V3": 2.536347,
+        "V4": 1.378155,
+        "V5": -0.338321,
+        "V6": 0.462388,
+        "V7": 0.239599,
+        "V8": 0.098698,
+        "V9": 0.363787,
+        "V10": 0.090794,
+        "V11": -0.551600,
+        "V12": -0.617801,
+        "V13": -0.991390,
+        "V14": -0.311169,
+        "V15": 1.468177,
+        "V16": -0.470401,
+        "V17": 0.207971,
+        "V18": 0.025791,
+        "V19": 0.403993,
+        "V20": 0.251412,
+        "V21": -0.018307,
+        "V22": 0.277838,
+        "V23": -0.110474,
+        "V24": 0.066928,
+        "V25": 0.128539,
+        "V26": -0.189115,
+        "V27": 0.133558,
+        "V28": -0.021053,
+        "Amount": 149.62,
+    }
+    
+    # Simular um POST para /predict enviando o JSON
+    response = client.post("/predict", json=payload)
+    
+    # Verificar se a resposta é 200 OK
+    assert response.status_code == 200
+    data = response.json()
+    
+    # A resposta deve conter os campos is_fraud, probability e status
+    assert "is_fraud" in data
+    assert "probability" in data
+    assert "status" in data
+    
+    # Garantir que a probabilidade seja um número decimal (float)
+    assert isinstance(data["probability"], float)
+```
+
+
+
+- `test_predict_invalid_amount():` Testa o funcionamento do contrato Pydantic (src/schemas/schemas.py), isto é, se a API retorna um erro (422 Unprocessable Entity) quando recebe valores inválidos em um objeto JSON encaminhado por um request/consulta de um sistema externo.
+
+```python
+def test_predict_invalid_amount():
+    payload = {
+        "Time": 0.0,
+        "V1": 0.0,
+        "V2": 0.0,
+        "V3": 0.0,
+        "V4": 0.0,
+        "V5": 0.0,
+        "V6": 0.0,
+        "V7": 0.0,
+        "V8": 0.0,
+        "V9": 0.0,
+        "V10": 0.0,
+        "V11": 0.0,
+        "V12": 0.0,
+        "V13": 0.0,
+        "V14": 0.0,
+        "V15": 0.0,
+        "V16": 0.0,
+        "V17": 0.0,
+        "V18": 0.0,
+        "V19": 0.0,
+        "V20": 0.0,
+        "V21": 0.0,
+        "V22": 0.0,
+        "V23": 0.0,
+        "V24": 0.0,
+        "V25": 0.0,
+        "V26": 0.0,
+        "V27": 0.0,
+        "V28": 0.0,
+        "Amount": -50.00,  # Valor inválido!
+    }
+
+    response = client.post("/predict", json=payload) # Simula um POST para /predict enviando o JSON
+
+    assert response.status_code == 422 # Expectativa de falha (422 Unprocessable Entity)
+    
+    assert "Amount" in response.text # Verificar se a mensagem de erro menciona o campo Amount
+```
+
+### 9. **Autenticação e Segurança**
+
+#### 9.1 **Panorama Geral Autenticação e Segurança**
+- **O que é?**
+    - Autenticação é o processo de verificar *quem* está tentando acessar o sistema. 
+    - Segurança envolve proteger a API contra acessos não autorizados, ataques maliciosos e vazamento de dados.
+    - Sem isso, qualquer pessoa na internet poderia enviar dados para sua API ou tentar derrubá-la.
+
+- **Opções de Mercado:**
+    1.  **API Key (Chave de API):** Um código secreto simples enviado no cabeçalho da requisição.
+        - *Prós:* Simples de implementar, fácil de usar para comunicação entre servidores (Machine-to-Machine).
+        - *Contras:* Se a chave vazar, precisa ser trocada manualmente. Não tem gestão de usuários complexa.
+    2.  **JWT (JSON Web Token):** Um token criptografado com validade temporária.
+        - *Prós:* Mais seguro, permite expiração automática e carrega informações do usuário. Padrão para apps com login de usuário.
+        - *Contras:* Mais complexo de implementar (requer endpoint de login).
+    3.  **OAuth2:** A solução mais segura no mercado atualmente (ex: "Logar com Google").
+        - *Prós:* Altamente seguro e padronizado.
+        - *Contras:* Complexidade muito alta para uma API interna ou microserviço simples.
+
+- **Nossa Escolha: API Key**
+    - **Motivo:** Para este projeto de Detecção de Fraude, o cenário provável é que a API seja consumida por outro sistema interno de banco (Ex: sistema de transações), e não por um usuário final num navegador.
+    - Para comunicação "Máquina x Máquina" (M2M) em ambiente controlado, a **API Key** oferece o melhor equilíbrio entre segurança e simplicidade. Ela garante que apenas quem tem o segredo (o sistema do banco) consiga solicitar predições, sem a sobrecarga de gerenciar logins e tokens temporários do OAuth2/JWT.
+
+#### 9.2 **Implementação da API Key**
+- **Segurança das Credenciais (.env):**
+    - A chave de acesso (`API_KEY`) **não** é salva no código fonte. Ela é armazenada em um arquivo oculto `.env` que fica apenas no servidor e é ignorado pelo Git (`.gitignore`).
+    - O arquivo `.env.example` serve como modelo para outros desenvolvedores.
+    - No script `main.py` foram usadas as bibliotecas `python-dotenv` e `os.getenv` para ler essa senha de forma segura. 
+    - Se a senha não existir, o sistema trava propositalmente (Fail Fast) para evitar brechas de segurança `main.py:L32-33`.
+
+- **Validação no FastAPI:**
+    - No script `main.py:L35` foi usada a classe `APIKeyHeader` do FastAPI para validar a API Key.
+    - No `main.py:L39-48` foi criada uma dependência `get_api_key` que intercepta todas as requisições ao endpoint `/predict` a fim de validar a API Key .
+    - Se o cabeçalho `access_token` estiver ausente ou incorreto, a API retorna imediatamente um erro `403 Forbidden` ("Não foi possível validar as credenciais"), protegendo o modelo de uso indevido.
+
+- **Atualização dos Testes:**
+    - No `test_api.py:L24` foi feita uma atualização para carregar a chave real do ambiente de teste `test_api.py:L14-22` e enviá-la no cabeçalho das requisições .
+    - No `test_api.py:L144-185` foi adicionado um teste específico (`test_predict_unauthorized`) para garantir que a porta de segurança está trancada para invasores.
+
+```python
+# src/api/main.py
+
+# 1. Carregar senha segura do .env
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
+if not API_KEY:
+    raise ValueError("ERROR: A variável de ambiente API_KEY não está configurada.")
+
+# 2. Configurar o esquema de segurança (Header)
+API_KEY_NAME = "access_token"
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+# 3. Criar a dependência de validação
+async def get_api_key(api_key_header: str = Security(api_key_header)):
+    if api_key_header == API_KEY:
+        return api_key_header
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Não foi possível validar as credenciais",
+    )
+
+# 4. Proteger o Endpoint
+@app.post("/predict", ...)
+def predict_fraud(transaction: TransactionInput, api_key: str = Security(get_api_key)):
+    # ...
+```
+
+```python
+# tests/test_api.py
+
+# 1. Carregar senha para os testes
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
+HEADERS = {"access_token": API_KEY}
+
+# 2. Testar acesso autorizado (Com chave)
+def test_predict_legitimate_transaction():
+    # ...
+    response = client.post("/predict", json=payload, headers=HEADERS)
+    assert response.status_code == 200
+
+# 3. Testar acesso negado (Sem chave)
+def test_predict_unauthorized():
+    # ...
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Não foi possível validar as credenciais"}
+```
+
+### 10. **Monitoramento e Manutenção (MLOps)**
 
 Modelos de Machine Learning degradam com o tempo (Data Drift). O padrão de fraude muda e o modelo antigo deixa de ser eficaz.
 
@@ -1142,7 +1695,7 @@ Modelos de Machine Learning degradam com o tempo (Data Drift). O padrão de frau
     -   Configurar automação (ex: GitHub Actions) para rodar os testes (`pytest`) a cada novo commit.
     -   Automatizar o build da imagem Docker para garantir que o deploy seja sempre feito com uma versão testada e segura.
 
-### 10. **Atualização do Modelo (Retreino)**
+### 11. **Atualização do Modelo (Retreino)**
 
 Definir uma política de atualização. Quando o monitoramento indicar queda na performance (ex: aumento de fraudes não detectadas), o pipeline de treinamento (Etapa 5) deve ser reexecutado com dados mais recentes para gerar um novo `model.pkl`.
 

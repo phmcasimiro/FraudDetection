@@ -64,6 +64,9 @@ def avaliar_modelo():  # Avaliação e Validação do modelo treinado
     output_dir = "artifacts/evaluation"
     os.makedirs(output_dir, exist_ok=True)
 
+    # Gerar timestamp para versionamento dos artefatos
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     if not all(os.path.exists(p) for p in [model_path, X_test_path, y_test_path]):
         logger.error(
             "Arquivos necessários não encontrados. Verifique o treino e o pré-processamento."
@@ -86,19 +89,21 @@ def avaliar_modelo():  # Avaliação e Validação do modelo treinado
         report = classification_report(y_test, y_pred)  # Gera relatório de métricas
         logger.info("\n" + report)
 
-        # Salvar relatório em texto
-        with open(f"{output_dir}/metrics_report.txt", "w") as f:
+        # Salvar relatório em texto com timestamp
+        report_filename = f"{output_dir}/metrics_report_{timestamp}.txt"
+        with open(report_filename, "w") as f:
             f.write(report)
+        logger.info(f"Relatório salvo em: {report_filename}")
 
         # 4. MATRIZ DE CONFUSÃO VISUAL
         logger.info("Gerando Matriz de Confusão...")
         cm = confusion_matrix(y_test, y_pred)  # Gera matriz de confusão
         plt.figure(figsize=(8, 6))  # Define o tamanho da figura
         sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)  # Gera heatmap
-        plt.title("Matriz de Confusão - Detecção de Fraude")  # Define o título
+        plt.title(f"Matriz de Confusão - {timestamp}")  # Define o título
         plt.xlabel("Predição do Modelo")  # Define o eixo x
         plt.ylabel("Valor Real (Gabarito)")  # Define o eixo y
-        plt.savefig(f"{output_dir}/confusion_matrix.png")  # Salva a imagem
+        plt.savefig(f"{output_dir}/confusion_matrix_{timestamp}.png")  # Salva a imagem
         plt.close()
 
         # 5. CURVA ROC E AUC
@@ -116,9 +121,9 @@ def avaliar_modelo():  # Avaliação e Validação do modelo treinado
         )  # Plota a curva ROC
         plt.xlabel("Taxa de Falsos Positivos (1 - Especificidade)")  # Define o eixo x
         plt.ylabel("Taxa de Verdadeiros Positivos (Recall)")  # Define o eixo y
-        plt.title("Curva ROC")  # Define o título
+        plt.title(f"Curva ROC - {timestamp}")  # Define o título
         plt.legend()  # Plota a legenda
-        plt.savefig(f"{output_dir}/roc_curve.png")  # Salva a imagem
+        plt.savefig(f"{output_dir}/roc_curve_{timestamp}.png")  # Salva a imagem
         plt.close()
 
         logger.info(f"Avaliação concluída! Resultados salvos em: {output_dir}")

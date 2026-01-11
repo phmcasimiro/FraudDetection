@@ -11,14 +11,23 @@ services:
     container_name: fraud_detection_container # Nome do container.
 
     # Sincronização em tempo real (Volumes)
+    #Atualizações nos diretórios e scripts serão refletida instantaneamente no container Docker.
     volumes:
-      - .:/app # O ponto (.) é a máquina local, e /app é o container. Agora, qualquer vírgula atualizada no VS Code/Editor será refletida instantaneamente dentro do container Docker.
+      - .:/app # O ponto (.) é máquina local, e /app é o container. 
 
     stdin_open: true # Mantém o container aberto para comandos interativos
 
     tty: true # Mantém o container aberto para comandos interativos
 
+    # Expor a porta da API (Host:Container)
+    ports:
+      - "8000:8000"
+
+    # Comando para iniciar a API com Uvicorn (Reload ativado para dev)
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+
     environment:
       - PYTHONPATH=/app
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
+      - API_KEY=${API_KEY}
