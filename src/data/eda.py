@@ -1,3 +1,7 @@
+# eda.py
+# Script para análise exploratória de dados (EDA)
+# Elaborado por: phmcasimiro
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt

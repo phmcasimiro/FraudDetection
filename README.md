@@ -267,6 +267,10 @@ pip show pytest
 - Criar um script `src/data/download_data.py` para baixar o dataset mais atualizado .
 
 ```python
+# download_data.py
+# Script para download do dataset do Kaggle
+# Elaborado por: phmcasimiro
+
 import kagglehub
 import shutil
 import os
@@ -298,6 +302,10 @@ if __name__ == "__main__":
 - **OBS:** Serão usadas bibliotecas de visualização que salvam gráficos como arquivos na pasta `artifacts/`.
 
 ```python
+# eda.py
+# Script para análise exploratória de dados (EDA)
+# Elaborado por: phmcasimiro
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -521,6 +529,8 @@ def validar_dados(df):
 ### 5. TREINAMENTO DO MODELO
 
 - O objetivo desta etapa é fazer com que o computador aprenda a distinguir uma transação legítima de uma fraude usando o Random Forest Classifier.
+
+- **IMPORTANTE:** Antes de treinar o modelo, é importante implementar o ML Flow para monitorar e controlar o treinamento do modelo. O ML Flow constrói um histórico das versões dos treinos do modelo, com parâmetros e resultados obtidos, visando documentação e uso futuro
 
 #### 5.1. **Fluxo do Script `train.py`**:
 
@@ -1592,6 +1602,70 @@ def test_predict_invalid_amount():
     assert "Amount" in response.text # Verificar se a mensagem de erro menciona o campo Amount
 ```
 
+#### 8.7 CI/CD com GitHub Actions
+
+- Considerando que este é o primeiro projeto da Pós-Graduação, não implementamos CI/CD em etapas anteriores por priorizar a compreensão da construção do Modelo de Machine Learning e da API. Nesta etapa 8 (Deploy), implementaremos CI/CD com GitHub Actions para verificar se os scripts seguem as normas PEP8 (código limpo), verificar se a lógica do predictor.py está correta e verificar se a API está funcionando corretamente.
+
+- **Tipos de Testes:**
+    - **Linter:** Verificação da adequação do seu código às normas PEP8 (código limpo).
+    - **Unit Tests:** Verificação da adequação da lógica do predictor.py.
+    - **Integration Tests:** Sobe a API e testa o endpoint /predict com um JSON real.
+
+- ** Implementação:**
+    - Script de Implementação: `.github/workflows/main.yml`
+    - Script de Testes: `tests/test_predict.py`
+    - Atenção: A API_KEY deve ser configurada no seu repositório do GitHub porque não sobe para o GitHub.
+    - Configuração de Variáveis de Ambiente: `secrets.API_KEY`
+        - No seu repositório do GitHub: Settings > Secrets and variables > Actions.
+        - Criar um ***New Repository Secret*** chamado `API_KEY` e colar o valor.
+
+Arquivo `.github/workflows/main.yml`:
+
+```bash
+# Nome do Workflow que aparecerá no GitHub
+name: FraudDetection CI/CD Pipeline
+
+# Gatilho: Quando o código será testado?
+on:
+  push:
+    branches: 
+      - '**'        # Rodar em TODAS as branches (incluindo sub-pastas)
+  pull_request:
+    branches: 
+      - main        # Rodar testes quando tentar mesclar algo na main
+
+jobs:
+  quality-assurance:
+    runs-on: ubuntu-latest # Máquina Linux gratuita do GitHub
+
+    steps:
+    - name: 1. Baixar o Código
+      uses: actions/checkout@v3
+
+    - name: 2. Configurar Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: 3. Instalar Dependências
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest httpx # Ferramentas de teste
+
+    - name: 4. Rodar Testes de Validação (Pytest)
+      env:
+        # O GitHub troca essa variável pelo valor secreto salvo no repositório > Settings > Secrets and variables > Actions na hora de rodar
+        API_KEY: ${{ secrets.API_KEY }} 
+      run: |
+        pytest tests/
+
+    - name: 5. Validar Build do Docker # Verificar se o Dockerfile criado continua funcionando
+      run: |
+        docker build -t fraud-app-test .
+```
+
+
 ### 9. **Autenticação e Segurança**
 
 #### 9.1 **Panorama Geral Autenticação e Segurança**
@@ -1680,6 +1754,10 @@ def test_predict_unauthorized():
     assert response.status_code == 403
     assert response.json() == {"detail": "Não foi possível validar as credenciais"}
 ```
+
+### 10. **CI/CD com GitHub Actions**
+
+- 
 
 ### 10. **Monitoramento e Manutenção (MLOps)**
 

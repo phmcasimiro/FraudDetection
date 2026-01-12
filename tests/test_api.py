@@ -10,6 +10,7 @@ from src.api.main import app
 # Importação da biblioteca os que serve para interagir com o sistema operacional
 import os
 from dotenv import load_dotenv
+
 # Carregar variáveis de ambiente para o teste
 load_dotenv()
 
@@ -19,7 +20,7 @@ client = TestClient(app)
 # Recuperar a chave de API do ambiente
 API_KEY = os.getenv("API_KEY")
 if not API_KEY:
-    raise ValueError("Erro no Teste: API_KEY não encontrada no .env")
+    raise ValueError("Erro no Teste: API_KEY não encontrada no ambiente ou no .env")
 
 HEADERS = {"access_token": API_KEY}
 

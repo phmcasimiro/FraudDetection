@@ -1,3 +1,7 @@
+# download_data.py
+# Script para download do dataset do Kaggle
+# Elaborado por: phmcasimiro
+
 import kagglehub
 import shutil
 import os
