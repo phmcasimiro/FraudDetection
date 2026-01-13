@@ -13,7 +13,7 @@ logs/*.log
 src/data/creditcard.csv
 src/data/creditcard.zip
 artifacts/train_py_v1.mp4
-artifacts/models/model.pkl
+#artifacts/models/model.pkl
 src/data/X_test.csv
 src/data/X_train.csv
 src/data/y_test.csv
