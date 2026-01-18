@@ -7,7 +7,6 @@ import pandas as pd
 import mlflow
 import os
 import logging
-import numpy as np
 
 # Evidently imports (Legacy API for 0.7.x)
 from evidently.legacy.report import Report
