@@ -5,16 +5,22 @@
 
 # Importação das classes FastAPI, HTTPException, Security e status que servem para criar a API, gerenciar as exceções, fornecer segurança e status, respectivamente
 from fastapi import FastAPI, HTTPException, Security, status
+
 # Importação da classe APIKeyHeader que serve para autenticação via API Key
 from fastapi.security import APIKeyHeader
+
 # Importação das classes TransactionInput e PredictionOutput que servem para validar os dados de entrada e saída
-from src.schemas.schemas import TransactionInput, PredictionOutput
+from src.api.schemas import TransactionInput, PredictionOutput
+
 # Importação da classe predictor que serve para fazer a predição de fraude
-from src.services.predictor import predictor
+from src.models.predictor import predictor
+
 # Importação da biblioteca logging que serve para registrar logs da API
 import logging
+
 # Importação da biblioteca os que serve para interagir com o sistema operacional
 import os
+
 # Importação da biblioteca dotenv que serve para carregar as variáveis de ambiente
 from dotenv import load_dotenv
 

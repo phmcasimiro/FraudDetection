@@ -7,23 +7,42 @@
 import joblib
 import pandas as pd
 import logging
-from src.schemas.schemas import TransactionInput
+from src.api.schemas import TransactionInput
 
 # Configurar logs para rastrear o que acontece na predição
 logger = logging.getLogger(__name__)
 
+import mlflow.sklearn
+import os
+
+# Configurar URI do MLflow (caso não esteja configurada no ambiente)
+# Em produção real, isso viria de variável de ambiente
+if not mlflow.get_tracking_uri():
+    mlflow.set_tracking_uri("sqlite:///mlflow.db")
+
+
 class FraudPredictor:
-    def __init__(self, model_path: str = "artifacts/models/model.pkl"):
+    def __init__(
+        self, model_name: str = "FraudDetectionRandomForest", stage: str = "Production"
+    ):
         """
-        Ao iniciar, o serviço carrega o modelo para a memória.
-        Isso evita ler o arquivo do disco a cada nova transação.
+        Ao iniciar, o serviço carrega o modelo do MLflow Registry.
+        Isso garante que estamos usando a versão marcada como Produção.
         """
+        model_uri = f"models:/{model_name}/{stage}"
         try:
-            self.model = joblib.load(model_path)
-            logger.info(f" Modelo carregado com sucesso de: {model_path}")
+            logger.info(f"Tentando carregar modelo do MLflow: {model_uri}")
+            self.model = mlflow.sklearn.load_model(model_uri)
+            logger.info(f"✅ Modelo carregado com sucesso de: {model_uri}")
         except Exception as e:
-            logger.error(f"Erro ao carregar o modelo: {e}")
-            raise e
+            logger.error(f"❌ Erro ao carregar o modelo do MLflow: {e}")
+            # Fallback para arquivo local em caso de falha do MLflow (Opcional, mas recomendado)
+            local_path = "artifacts/models/model.pkl"
+            if os.path.exists(local_path):
+                logger.warning(f"⚠️ Usando fallback local: {local_path}")
+                self.model = joblib.load(local_path)
+            else:
+                raise e
 
     def predict(self, data: TransactionInput):
         """
@@ -34,7 +53,7 @@ class FraudPredictor:
         df_input = pd.DataFrame([data.model_dump()])
 
         # 2. Realizar a predição de classe (0 ou 1)
-        prediction = self.model.predict(df_input)[0] # 0 (Legítima) ou 1 (Fraude)
+        prediction = self.model.predict(df_input)[0]  # 0 (Legítima) ou 1 (Fraude)
 
         # 3. Calcular a probabilidade de ser fraude
         # [0, 1] -> [Legítima, Fraude] -> Utilizou-se o índice 1 que é a probabilidade de ser fraude
@@ -51,8 +70,9 @@ class FraudPredictor:
         return {
             "is_fraud": int(prediction),
             "probability": float(probability),
-            "status": status
+            "status": status,
         }
+
 
 # Instância única (Singleton) para ser usada pela API
 predictor = FraudPredictor()

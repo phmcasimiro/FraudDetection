@@ -1,371 +1,273 @@
-# Fraud Detection ML API
+# CREDIT CARD FRAUD DETECTION / Detecção de Fraudes em Cartões de Crédito
+DEVELOPED BY: _phmcasimiro_
 
- - Essa é uma API de Machine Learning que usa um modelo de Random Forest para prever fraudes com base em um conjunto de dados de transações de cartão de crédito.
+MBA IN GENERATIVE ARTIFICIAL INTELLIGENCE - PCDF & IBMEC
 
-# **O que é Machine Learning?**
+## Software Engineering applied to Machine Learning | Engenharia de Software aplicada ao Aprendizado de Máquina
 
-Técnica na qual sistemas de computador aprendem com dados e melhoram seu desempenho em uma tarefa específica sem serem explicitamente programados para ela. Em vez de receber um conjunto de regras rígidas, o algoritmo é "treinado" com grandes volumes de dados, encontrando padrões e criando um modelo preditivo ou de decisão.
+## Table of Contents | Sumário
 
-# **Principais Tipos de Machine Learning**
+1. [System Architecture Overview | Visão Geral da Arquitetura do Sistema](#system-architecture-overview--visão-geral-da-arquitetura-do-sistema)
+2. [Data Pipeline | Pipeline de Dados](#pipeline-de-dados)
+3. [Extraction & Ingestion | Extração e Ingestão](#1-extração-e-ingestão-de-dados)
+4. [EDA | Análise Exploratória](#2-análise-exploratória-de-dados-eda)
+5. [Preprocessing | Pré-processamento](#4-limpeza-e-pré-processamento-dos-dados)
+6. [Training & MLOps | Treinamento e MLOps](#5-treinamento-e-mlops)
+7. [Evaluation | Avaliação](#6-avaliação-do-modelo-validação-do-modelo)
+8. [Infrastructure | Infraestrutura (Docker)](#7-infraestrutura-e-portabilidade-docker)
+9. [Deploy | Deploy do Modelo](#8-deploy-do-modelo-produção)
 
-As três categorias principais de aprendizado:
+### System Architecture Overview | Visão Geral da Arquitetura do Sistema
 
-### **Aprendizado Supervisionado (Supervised Learning)**
+**1. User Interface Layer**
 
- - O algoritmo é treinado com dados rotulados, ou seja, pares de entrada e saída esperada.
+- Client/User: Makes HTTP POST requests to /predict endpoint
 
- - O objetivo é aprender a mapear a entrada para a saída correta.
+**1. Camada de Interface do Usuário**
 
- - Exemplos:
+- Cliente/Usuário: Faz requisições HTTP POST para o endpoint /predict
 
-	 - **Classificação** - Ex: Identificar se um e-mail é spam ou não
+**2. API Layer (FastAPI)**
 
-	 - **Regressão** - Ex: Prever o preço de uma casa).
+- FastAPI Application: Handles HTTP requests and responses
 
-### **Aprendizado Não Supervisionado (Unsupervised Learning)**
+- Authentication: API key-based authentication
 
- - O algoritmo é treinado com dados não rotulados.
+- Input Validation: Pydantic schemas for data validation
 
- - O objetivo é encontrar padrões, estruturas ou agrupamentos ocultos nos dados.
 
- - Exemplos:
+**2. Camada de API (FastAPI)**
 
-	 - **Clusterização** - Ex: Agrupar clientes com base em similaridades de compra
+- Aplicação FastAPI: Lida com requisições e respostas HTTP
 
-	 - **Redução de Dimensionalidade** - ???
+- Autenticação: Autenticação baseada em chave de API
 
-### **Aprendizado por Reforço (Reinforcement Learning)**
+- Validação de Entrada: Esquemas Pydantic para validação de dados
 
-- O algoritmo (Agente) aprende por meio da interação com um ambiente dinâmico, recebendo recompensas por ações desejadas e punições por ações indesejadas.
+**3. Application Core**
 
-- O objetivo é maximizar a recompensa cumulativa.
+- Prediction Service: Orchestrates the prediction workflow
 
-- Exemplos: 
-	- Treinamento de robôs, sistemas de jogos e veículos autônomos.
+- Authentication: Secures API endpoints
 
-### **Pipeline de Dados do Modelo de Machine Learning**
-- Definição do Problema
-- Extração e Ingestão de Dados
-- Análise Exploratória dos Dados
-- Limpeza e Preparação dos Dados
-- Treinamento do Modelo (Experimentar Modelos)
-- Avaliação do Modelo (Validação do Modelo)
-- Deploy do Modelo (Produção)
-- Monitoramento do Modelo (Produção)
-- Atualização do Modelo (Produção)
+- Data Validation: Ensures input data quality
+
+**3. Núcleo da Aplicação**
+
+- Serviço de Predição: Orquestra o fluxo de trabalho de predição
+
+- Autenticação: Protege os endpoints da API
+
+- Validação de Dados: Garante a qualidade dos dados de entrada
+
+**4. Machine Learning Engine**
+
+- Model Artifact: Serialized Random Forest model (.pkl file) and MLflow Model Registry.
+
+- Data Preprocessing: Feature engineering and transformation
+
+- Random Forest Model: Trained ML model for predictions
+
+**4. Motor de Aprendizado de Máquina**
+
+- Arquivo do Modelo: Modelo Random Forest serializado `model.pkl` e Registro de Modelos MLflow.
+
+- Pré-processamento de Dados: Engenharia e transformação de recursos
+
+- Modelo Random Forest: Modelo de aprendizado de máquina treinado para predições
+
+**5. Data Pipeline (Offline)**
+
+- **Data Storage:** SQLite database (`data/fraud_detection.db`) for structured storage.
+
+- **Data Processing:** ETL pipeline reads from DB, cleans/transforms, and saves back to DB.
+
+- **Model Training:** Offline training using data from SQLite.
+
+**5. Pipeline de Dados (Offline)**
+
+- **Armazenamento de Dados:** Banco de dados SQLite (`data/fraud_detection.db`) para armazenamento estruturado.
+
+- **Processamento de Dados:** Pipeline ETL lê do banco, limpa/transforma e salva de volta no banco.
+
+- **Treinamento do Modelo:** Treinamento offline usando dados do SQLite.
+
+
+**6. Request Flow**
+
+- **Request:** _User → POST /predict → FastAPI_
+
+- **Validation:** _API validates input using Pydantic schemas_
+
+- **Authentication:** _API key verification_
+
+- **Prediction:** _Service loads model, preprocesses data, runs inference_
+
+- **Response:** _Prediction result → JSON → User_
+
+**6. Fluxo de Requisição**
+
+- **Requisição:** _Usuário → POST /predict → FastAPI_
+
+- **Validação:** _A API valida a entrada usando esquemas Pydantic_
+
+- **Autenticação:** _Verificação da chave da API_
+
+- **Previsão:** _O serviço carrega o modelo, pré-processa os dados e executa a inferência_
+
+- **Resposta:** _Resultado da previsão → JSON → Usuário_
+
+
+**7. Key Characteristics** 
+
+- **Separation of Concerns:** _Clear separation between API, business logic, and ML components_
+
+- **Offline Training:** _Model training is separate from serving_
+
+- **Serialized Model:** _Uses pickle files for model persistence_
+
+- **RESTful Design:** _Standard API patterns for ML serving_
+
+**7. Características principais**
+
+- **Separação de responsabilidades:** _Separação clara entre os componentes da API, da lógica de negócios e do aprendizado de máquina_
+
+- **Treinamento offline:** _O treinamento do modelo é separado da sua disponibilização_
+
+- **Modelo serializado:** _Usa arquivos pickle para persistência do modelo_
+
+- **Design RESTful:** _Padrões de API padrão para disponibilização de aprendizado de máquina_
+
+### 1. Data Pipeline & Training Architecture (Offline) | Arquitetura de Pipeline de Dados e Treinamento
+
+This workflow covers the data lifecycle from ingestion to model registration, running inside a Dockerized environment.
+
+Este fluxo de trabalho cobre o ciclo de vida dos dados, desde a ingestão até o registro do modelo, rodando dentro de um ambiente Dockerizado.
+
+```mermaid
+graph TD
+    subgraph DockerEnv["Docker Environment"]
+        
+        subgraph DataLayer["Data Layer"]
+            RawData[("Raw Data (CSV)")]
+            ETL["ETL Process (preprocess.py)"]
+            DB[("SQLite Database (fraud_detection.db)")]
+        end
+
+        subgraph TrainingLayer["Training & Evaluation"]
+            Trainer["Training Script (train.py)"]
+            Evaluator["Evaluation Script (evaluate.py)"]
+            SMOTE["SMOTETomek (Balancing)"]
+            RF["Random Forest Classifier"]
+        end
+
+        subgraph MLOpsLayer["MLOps (MLflow)"]
+            Tracking["Experiment Tracking (Metrics/Params)"]
+            Registry[("Model Registry (Production)")]
+            Artifacts["Artifact Store (Plots/Logs)"]
+        end
+    end
+
+    RawData -->|"Ingest & Clean"| ETL
+    ETL -->|"Store Processed Data"| DB
+    
+    DB -->|"Load Training Data"| Trainer
+    Trainer -->|"Apply Balancing"| SMOTE
+    SMOTE -->|"Train"| RF
+    
+    RF -->|"Log Metrics & Model"| Tracking
+    RF -->|"Register Version"| Registry
+    
+    DB -->|"Load Test Data"| Evaluator
+    Evaluator -->|"Generate Metrics"| Tracking
+    Evaluator -->|"Save Plots"| Artifacts
+    
+    style DockerEnv fill:#2c3e50,stroke:#34495e,stroke-width:2px,color:#fff
+```
+
+### 2. Deployment & Inference Architecture (Online) | Arquitetura de Deploy e Inferência
+
+This workflow illustrates how the API serves predictions, abstracting the training complexity.
+
+Este fluxo de trabalho ilustra como a API fornece predições, abstraindo a complexidade do treinamento.
+
+```mermaid
+graph TD
+    subgraph ClientSide["Client Side"]
+        User["External System / User"]
+    end
+
+    subgraph ServerSide["Server Side (Docker Container)"]
+        subgraph APIGateway["API Gateway (FastAPI)"]
+            EntryPoint["POST /predict"]
+            Auth["Auth Middleware (API Key)"]
+            Validator["Pydantic Validator (Schema)"]
+        end
+
+        subgraph ServiceLayer["Core Services"]
+            Predictor["FraudPredictor Service (Singleton)"]
+            Logic["Business Logic (Thresholds)"]
+        end
+        
+        subgraph ModelSource["Model Source"]
+            Registry[("MLflow Registry (Production)")]
+            Fallback["Local Fallback (.pkl)"]
+        end
+    end
+
+    User -->|"1. Request (JSON)"| EntryPoint
+    EntryPoint -->|"2. Validate Data"| Validator
+    Validator -->|"3. Authenticate"| Auth
+    
+    Auth -->|"4. Forward Valid Request"| Predictor
+    
+    Predictor -->|"5. Load Model (On Startup)"| Registry
+    Registry -.->|"If Connection Fails"| Fallback
+    
+    Predictor -->|"6. Inference"| Logic
+    Logic -->|"7. Return Result (Class + Prob)"| EntryPoint
+    EntryPoint -->|"8. Response (JSON)"| User
+    
+    style ServerSide fill:#4a148c,stroke:#6a1b9a,stroke-width:2px,color:#fff
+```
 
 ---------------
 
-# 1. SETUP
 
-## 1.1 Versões de Python e pip do sistema:
+### 1. Extração e Ingestão de Dados
 
- ```bash
-python --version
-python3 --version
-```
- - Verificar os caminhos executáveis de Python instalados no sistema:
+#### 1.1 Extração e Ingestão de Dados
+- O Script `download_data.py` baixa o dataset mais atualizado .
 
-```bash
-which -a python python3
-```
+`script download_data.py`
 
- - Verificar versões instaladas via pyenv:
 
-```bash
-pyenv versions
-```
-
- - Verificar versão do ambiente virtual:
-
-```bash
-python -V
-```
- -  Verificar a versão do pacote pip:
-
-```bash
-pip --version
-```
-
-## 1.2 Versionador de código (Git e GitHub):
-
-```bash
-git --version
-git config --global user.name "phmcasimiro"
-git config --global user.email "phmcasimiro@gmail.com"
-```
-
- - Criar Repositório no GitHub e sincronizar com o repositório local:
-
-```python
-# GitHub - Criação de repositório na Nuvem
-
-# 1. Acessar o GitHub
-<https://github.com/phmcasimiro>
-
-# 2. Escolha o nome do repositório
-<FraudDetection>
-
-# 3. Escolha o nível de acesso (público ou privado)
-<Público>
-
-# 4. Crie o repositório (sem marcar nada em "initialize this repository with...")
-<https://github.com/phmcasimiro/FraudDetection.git>
-
-# Git - Sincronização de repositório local com o repositório na Nuvem
-# 1. Inicialize o Git localmente
-git init
-
-# 2. Adicione os arquivos ao "palco"
-git add .
-
-# 3. Crie o primeiro commit (ponto de partida)
-git commit -m "feat: Estrutura inicial do projeto de Detecção de Fraudes"
-
-# 4. Renomeie a branch para main
-git branch -m main
-
-# 5. Conecte o repositório local ao GitHub
-# Substitua pela URL que você copiou
-git remote add origin https://github.com/phmcasimiro/FraudDetection.git
-
-# 6. Envie o código para o GitHub
-git push -u origin main
-```
-
-## 1.3 GERENCIADOR DE PROJETOS (GitHub Projects)
- - O GitHub Projects é uma ferramenta que permite gerenciar projetos de forma colaborativa.
- - Utilizaremos neste projeto para gerenciar as tarefas de desenvolvimento e construir um histórico de progresso.
-
-```bash
-# 1. Entrar no GitHub Projects
-<https://github.com/users/phmcasimiro/projects/2>
-
-# 2. Canto superior direito, clicar em "settings"
-<https://github.com/users/phmcasimiro/projects/2/settings>
-
-# 3. Selecionar Default Repository "FraudDetection"
-```
-
-## 1.4 ESTRUTURA DE DIRETÓRIOS
-
-```bash
-# Linux - Criação de diretórios
-mkdir src
-mkdir src/api
-mkdir src/data
-mkdir src/models
-mkdir tests
-mkdir logs
-mkdir artifacts
-mkdir artifacts/models
-```
-``` bash
-# Estrutura de diretórios FraudDetection
-├── artifacts/
-│   └── models/
-├── logs/
-├── src/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── api/
-│   │   ├── __init__.py
-│   │   └── main.py
-│   ├── data/
-│   │   ├── __init__.py
-│   ├── models/
-│   |   └── __init__.py
-│   ├── schemas/
-│   |   ├── __init__.py
-│   │   └── schemas.py
-│   ├── services/
-│   |   ├── __init__.py
-│   │   └── services.py
-├── tests/
-│   └── __init__.py
-├── .gitignore
-├── requirements.txt
-└── README.md
-```
-
-## 1.5 CRIAR ARQUIVOS `__init__.py`
- - Arquivos .py são considerados módulos em Python, e o arquivo `__init__.py` é um arquivo especial que define um diretório como um pacote Python.
-
-```bash
-# Linux - Criação de arquivos .py
-touch src/__init__.py
-touch src/api/__init__.py
-touch src/data/__init__.py
-touch src/models/__init__.py
-touch tests/__init__.py
-```
-
-## 1.6 CRIAR ARQUIVOS DE CONFIGURAÇÃO DO PROJETO
-
-**`.gitignore`**
-
-```
-venv/
-__pycache__/
-*.pyc
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-logs/*.log
-.env
-*.pkl
-.DS_Store
-```
-
-**`requirements.txt`**
-```
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.6.0
-pytest==7.4.3
-pytest-cov==4.1.0
-black==24.1.1
-ruff==0.1.15
-mypy==1.8.0
-httpx==0.26.0
-scikit-learn==1.4.0
-```
-### 1.7 INSTALAR BIBLIOTECAS
-```bash
-pip install -r requirements.txt
-```
-
-### 1.8 TESTE FASTAPI
- - Criar arquivo **`test_api.py`**
-```bash
-from fastapi import FastAPI
-app = FastAPI()
-@app.get("/")
-def read_root():
-return {"message": "Setup funcionando!"}
-```
-- Executar o arquivo **`test_api.py`**
-```bash
-uvicorn test_api:app --reload
-```
- - Após o teste, **deletar** arquivo **`test_api.py`**
-
-### 1.9 VERIFICAÇÃO FINAL DE AMBIENTE
-
-```bash
-python --version
-pip --version
-git --version
-pip show fastapi
-pip show pytest
-```
-------
-
-### 2. Extração e Ingestão de Dados
-
-#### 2.1 Extração e Ingestão de Dados
-- Criar um script `src/data/download_data.py` para baixar o dataset mais atualizado .
-
-```python
-# download_data.py
-# Script para download do dataset do Kaggle
-# Elaborado por: phmcasimiro
-
-import kagglehub
-import shutil
-import os
-
-def download_dataset():
-    print("Iniciando download do Kaggle...")
-    # Baixa a versão mais recente do dataset
-    path = kagglehub.dataset_download("mlg-ulb/creditcardfraud")
-    
-    # O kagglehub baixa o arquivo .csv para um cache.
-    source_file = os.path.join(path, "creditcard.csv") # Localiza o arquivo .csv baixado
-    destination_path = "src/data/creditcard.csv" # Define o caminho de destino
-    
-    # Move o arquivo para sua pasta de dados do projeto
-    if os.path.exists(source_file):
-        shutil.move(source_file, destination_path)
-        print(f"Dataset movido com sucesso para: {destination_path}")
-    else:
-        print(f"Erro: Arquivo não encontrado em {source_file}")
-
-if __name__ == "__main__":
-    download_dataset()
-```
-
-### 3. Análise Exploratória de Dados (EDA)
+### 2. Análise Exploratória de Dados (EDA)
 - Antes de começar a codificar a API, é necessário entender os dados. 
 - Verificar a correlação das variáveis `V1` a `V28` e a distribuição da variável alvo `Class`.
-- Criar um script `src/data/eda.py` para implementar uma análise exploratória de dados (EDA) .
-- **OBS:** Serão usadas bibliotecas de visualização que salvam gráficos como arquivos na pasta `artifacts/`.
 
-```python
-# eda.py
-# Script para análise exploratória de dados (EDA)
-# Elaborado por: phmcasimiro
+- O script `src/data/eda.py` implementa uma análise exploratória de dados (EDA).
 
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-import os
+- **OBS:** Gráficos para visualização foram feitos com as bibliotecas `seaborn` e `matplotlib` e salvos na pasta `artifacts/`.
 
-def run_eda():
-    # 1. Carregar os dados
-    df = pd.read_csv("src/data/creditcard.csv")
-    
-    # Criar pasta para salvar gráficos (se não existir)
-    os.makedirs("artifacts", exist_ok=True)
 
-    # 2. Analisar Distribuição da Classe (Target)
-    print("Analisando distribuição de classes...")
-    plt.figure(figsize=(8, 6)) # Define o tamanho da figura
-    sns.countplot(x='Class', data=df) # Cria o gráfico de contagem
-    plt.title("Distribuição: 0 (Normal) vs 1 (Fraude)") # Define o título do gráfico
-    plt.savefig("artifacts/distribuicao_classe.png") # Salva o gráfico
-    
-    # Imprimir proporção no terminal
-    print(df['Class'].value_counts(normalize=True))
-
-    # 3. Analisar Correlação
-    print("Gerando matriz de correlação...")
-    # Calculando correlação de todas as variáveis com a Classe
-    correlations = df.corr()['Class'].sort_values(ascending=False)
-    
-    # Gerar Heatmap das correlações
-    plt.figure(figsize=(12, 10)) # Define o tamanho da figura
-    sns.heatmap(df.corr(), annot=False, cmap='coolwarm') # Cria o heatmap
-    plt.title("Matriz de Correlação Global") # Define o título do gráfico
-    plt.savefig("artifacts/matriz_correlacao.png") # Salva o gráfico
-    
-    print("EDA concluída. Gráficos salvos em /artifacts")
-
-if __name__ == "__main__":
-    run_eda()
-```
-
-#### **3.1 Distribuição da Variável Alvo (`Class`):**
+#### **3.1 Distribuição da Variável Alvo `Class`:**
 
 <p align="center">
   <img src="artifacts/distribuicao_classe.png" alt="Distribuição de Classes" width="600">
 </p>
 
-- A coluna `Class` possui dois valores: **0** (legítima) e **1** (fraude).
+- A variável `Class` possui dois valores: **0** (legítima) e **1** (fraude).
 
-- É essencial verificar o balanceamento/desbalanceamento das variáveis, então, usaremos um gráfico de barras (Distribuição de Classes) para visualizar isso.
+- Antes de treinar o modelo é essencial verificar o balanceamento/desbalanceamento das variáveis, então, usaremos um gráfico de barras (Distribuição de Classes) com este fim.
 
-- Em fraudes, a classe "1" (fraude) costuma ser uma fração mínima, isto é, há uma barra enorme no 0 e uma quase invisível no 1.
+- Em fraudes, a classe "1" (fraude) costuma ser uma fração mínima, o que se traduz em uma barra enorme no 0 e uma quase invisível no 1.
 
-- Em Machine Learning, isso é uma **Classe Desbalanceada**. Caso o modelo seja treinado assim, aprenderá que "quase sempre não é fraude" e ignorará as fraudes reais.
-
-- Analisando o gráfico `distribuicao_classe.png` é possível verificar uma coluna gigante no valor **0** (Transações Legítimas) e uma quase invisível no valor **1** (Fraudes).
+- Em Machine Learning, isso significa que o dataset possui **Classes Desbalanceadas**. Caso o modelo seja treinado com dados severamente desbalanceados (menos de 0.2% dos dados são fraudes) aprenderá que "quase sempre não é fraude" e ignorará as fraudes reais.
     
--   Em Machine Learning, isto exemplifica o conceito de **Desbalanceamento de Classe Severo**, isto é, no  dataset, menos de 0.2% dos dados são fraude.
-    
--   Se o desbalanceamento não for tratado, o modelo de Random Forest aprenderá a sempre classificar como "0" (Transação Legítima), pois ele terá 99.8% de acurácia fazendo isso, mesmo falhando em detectar todas as fraudes.
+- Explicando de outra forma, se o desbalanceamento não for tratado, o modelo de Random Forest aprenderá a sempre classificar como "0" (Transação Legítima), pois ele terá 99.8% de acurácia fazendo isso, mesmo falhando em detectar todas as fraudes (0.2%).
    
-- **Importante:** Vamos focar na métrica **Recall** a fim de não ignorar nenhuma fraude, mesmo que isso gere alguns alarmes falsos (Falsos Positivos).
+- **Importante:** Neste projeto focaremos na métrica **Recall** _(detalhes em: docs/Teoria&Conceitos.md)_ a fim de não ignorar nenhuma fraude, mesmo que isso gere alguns alarmes falsos (Falsos Positivos).
 
 
 #### **3.2 Correlação das Variáveis `V1` a `V28`**
@@ -374,11 +276,9 @@ if __name__ == "__main__":
   <img src="artifacts/matriz_correlacao.png" alt="Correlação das Variáveis" width="600">
 </p>
 
-- Neste dataset as variáveis `V1` a `V28` são resultado de um **PCA** (Principal Component Analysis).
+- Neste dataset as variáveis `V1` a `V28` são resultado de um **PCA** (Principal Component Analysis), que transforma variáveis originais em novos componentes que são **independentes** entre si _(detalhes em: docs/Teoria&Conceitos.md)_.
 
-- O PCA transforma variáveis originais em novos componentes que são **independentes** entre si. 
-
-- Logo, se fizermos uma matriz de correlação entre as variáveis, a correlação será próxima de zero (0).
+- Logo, se fizermos uma matriz de correlação entre as variáveis, a correlação entre elas será próxima de zero (0).
 
 - O Foco da Análise é a correlação das variáveis com a variável `Class/Fraude`, ou seja, descobrir quais variáveis `V` têm mais poder preditivo (influência) para determinar fraudes.
 
@@ -390,77 +290,44 @@ if __name__ == "__main__":
 
 - **Cores Claras/Neutras** Indicam **correlações fracas ou nulas (valor 0)**, ou seja, as variáveis apresentam comportamento independente entre si.
 
-- O **Centro do gráfico** é marcado por cores neutras e azul clara, isto é, as variáveis não possuem correlação entre si em razão da técnica PCA aplicada ao conjunto de dados. Em outras palavras, as variáveis `V1` a `V28` têm correlação zero entre si (as células do mapa de calor fora da diagonal são neutras em sua maioria). A razão desse fenômeno é a aplicação da técnica **PCA** (Análise de Componentes Principais), uma técnica de engenharia de features que transforma dados correlacionados em componentes independentes.
+- O **Centro do gráfico** é marcado por cores neutras e azul clara, isto é, as variáveis não possuem correlação entre si em razão da técnica PCA aplicada ao conjunto de dados. Em outras palavras, as variáveis `V1` a `V28` têm correlação zero entre si (as células do mapa de calor fora da diagonal são neutras em sua maioria). A razão desse fenômeno é a aplicação da técnica **PCA** (Análise de Componentes Principais), uma técnica de engenharia de features que transforma dados correlacionados em componentes independentes _(detalhes em: docs/Teoria&Conceitos.md)_.
 
-- A análise de variância é uma técnica estatística que permite avaliar a variação de uma variável em relação a outra variável. Em outras palavras, verifica-se quais variáveis possuem maior variação quando a `Class/Fraude` é `1` e quando é `0`. Essas variáveis serão as mais importantes para o seu modelo de Random Forest.
+- A análise de variância é uma técnica estatística que permite avaliar a variação de uma variável em relação a outra variável. Em outras palavras, verifica-se quais variáveis `V1` a `V28` possuem maior variação quando a `Class/Fraude` é `1` e quando é `0`. As variáveis identificadas serão as mais importantes para o modelo de Random Forest.
 
-Ao analisar a última linha (ou coluna) da matriz, que mostra a correlação com a `Class/Fraude`, verificamos que as variáveis `V17`, `V14` e `V12` apresentam correlações negativas relativamente fortes com a `Class/Fraude`. 
+- Ao analisar a última linha (ou coluna) da matriz, que mostra a correlação com a `Class/Fraude`, verificamos que as variáveis `V17`, `V14` e `V12` apresentam correlações negativas relativamente fortes com a `Class/Fraude`. 
 
-### 4. LIMPEZA E PRÉ-PROCESSAMENTO DOS DADOS
+### **4. LIMPEZA E PRÉ-PROCESSAMENTO DOS DADOS**
 
-- A partir da identificação das variáveis críticas (V12, V14 e V17) e do desbalanceamento do dataset, a **limpeza e pré-processamento dos dados** garantirão que o modelo de Random Forest seja treinado com dados de qualidade, evitando que o modelo seja enganado pelo ruído dos dados e que ele aprenda a classificar como "0" (Transação Legítima) mesmo falhando em detectar todas as fraudes. 
+- A partir da identificação das variáveis críticas (V12, V14 e V17) e do desbalanceamento do dataset, a **limpeza e pré-processamento dos dados** garantem que o modelo de Random Forest seja treinado com dados de qualidade, evitando que o modelo seja enganado pelo ruído dos dados e que ele aprenda a classificar como "0" (Transação Legítima) e como "1" (Fraudes), mesmo que falhe em detectar todas as fraudes. 
 
 #### **4.1 VERIFICAÇÃO DE INTEGRIDADE (DATA CLEANING)**
 
 - O objetivo é garantir que todas as entradas estejam em uma escala comparável e que o modelo consiga "enxergar" a fraude apesar da escassez de exemplos de fraudes.
 
-- **TRATAMENTO DE NULOS:** Confirmar que não existem valores NaN ou vazios. Havendo, decidir se deve-se aplicar uma técnica de imputação ou simplesmente remover as linhas com valores nulos.
+- **TRATAMENTO DE NULOS:** Confirmar que não existem valores NaN ou vazios. Havendo, decidir se aplicaremos uma técnica de imputação ou simplesmente removeremos as linhas com valores nulos.
 
 - **REMOÇÃO DE DUPLICATAS:** Transações identicas podem causar overfitting, ou seja, o modelo decora o dado em vez de aprender o padrão, portanto, devem ser removidas. 
 
-#### **4.1.1 VALIDAÇÃO DE INTEGRIDADE DOS DADOS (PANDERA)**
+#### **4.1.1 VALIDAÇÃO DE INTEGRIDADE DE DADOS (PANDERA)**
 
 - Visando garantir um pipeline de dados integro e evitar o processamento de dados corrompidos, foi implementada uma camada de validação (schema) usando a biblioteca **Pandera**.
 
-- **O que é o Pandera e por que usá-lo?**
- 
 - Se, no futuro, o Kaggle mudar o formato do arquivo (_creditcard.csv_) ou alguma coluna seja disponibilizada como texto em vez de número, isto é, houver qualquer tipo de mudança de formato ou tipo de dados, sem o Pandera, o script falharia de forma silenciosa ou poderia haver um erro matemático no treino.
 
 - O uso do Pandera cria um "vigilante" que verifica o DataFrame, avalia e alerta alterações no dataset, garantindo a integridade estatística do modelo. O Pandera funciona como um contrato de dados, um schema, um molde ao qual o dado que entra no pipeline deve adequar seu formato e tipo. Caso contrário, o Pandera interrompe o processo imediatamente, evitando que o modelo aprenda padrões errados de dados inadequados (Evita o "Garbage In, Garbage Out").
 
-- Foi definido um contrato/schema rígido (`src/data/pandera_schemas.py`) que verifica:
+- Foi definido um contrato/schema rígido `src/data/pandera_schemas.py` que verifica:
     - **Tipagem:** Garante que colunas V1 a V28, Time e Amount sejam sempre `float`.
     - **Regras de Negócio:** Verifica se a coluna `Amount` possui valores negativos (inválidos para transações).
     - **Consistência do Alvo:** Garante que a coluna `Class` contenha apenas os valores 0 ou 1.
     - **Contrato de Interface:** O strict=True garante que o modelo sempre receba as mesmas 30 variáveis de entrada, evitando erros de dimensão no futuro.
 
-- Desse modo, o pipeline segue o princípio de "Falha Rápida" (Fail-Fast), interrompendo o processo imediatamente caso o contrato de dados (schema) seja violado.
+- Assim o pipeline segue o princípio de "Falha Rápida" (Fail-Fast), interrompendo o processo imediatamente caso o contrato de dados (schema) seja violado.
 
-- A documentação desta etapa encontra-se em no [GitHub Projetcs FraudDetection - Task: Qualidade dos Dados](https://github.com/users/phmcasimiro/projects/2/views/1?pane=issue&itemId=148208864&issue=phmcasimiro%7CFraudDetection%7C9)
-
-``` python
-# src/data/pandera_schemas.py
-# Project: Fraud Detection
-# author: phmcasimiro
-# date: 2026-01-07
-# Schema for the data
-
-
-import pandera as pa
-from pandera import Column, Check
-
-# Definir schema do dataset
-transaction_schema = pa.DataFrameSchema(
-    columns={
-        "Time": Column(float, nullable=False),
-        "Amount": Column(float, Check.greater_than_or_equal_to(0), nullable=False),
-        "Class": Column(int, Check.isin([0, 1]), nullable=False),
-        **{f"V{i}": Column(float, nullable=False) for i in range(1, 29)} # Usar dicionário para validar V1 até V28
-        },
-    strict=True, # Garante que não existam colunas extras não mapeadas
-    coerce=True  # Tenta converter os dados para o tipo correto se possível
-)
-
-def validar_dados(df):
-    """
-    Função auxiliar para validar o DataFrame
-    """
-    return transaction_schema.validate(df)
-```
 
 #### **4.2 ESCALONAMENTO DE ATRIBUTOS (FEATURE SCALING)**
 
-- As variáveis `V1` a `V28` já estão em uma escala similar devido ao PCA. Contudo, as colunas `Time` e `Amount` possuem escalas completamente diferentes (ex: `Amount` pode ir de 0 a 25.000).
+- As variáveis `V1` a `V28` já estão em uma escala similar devido ao PCA. Contudo, as colunas `Time` e `Amount` possuem escalas completamente distintas (ex: `Amount` pode ir de 0 a 25.000).
 
 - O Random Forest é menos sensível à escala do que modelos lineares, mas o escalonamento ajuda na convergência e na comparação de importância de features.
 
@@ -470,259 +337,122 @@ def validar_dados(df):
 
 - **StandardScaler** é mais recomendado para dados com poucos outliers.
 
+- Neste projeto foi aplicado o RobustScaler no script `src/data/preprocess.py`
+
 #### **4.3 DIVISÃO DE CONJUNTOS (SPLITING)**
 
-- O dataset será dividido em dois conjuntos: **treino** e **teste**.
+- O dataset foi dividido em dois conjuntos: **treino** e **teste** antes de qualquer técnica de balanceamento a fim de evitar o **Data Leakage** (vazamento de dados do teste para o treino).
 
-- Separar os dados antes de qualquer técnica de balanceamento para evitar o **Data Leakage** (vazamento de dados do teste para o treino).
+- O conjunto de **treino** foi usado para treinar o modelo.
 
-- O conjunto de **treino** será usado para treinar o modelo.
+- O conjunto de **teste** foi usado para avaliar o desempenho do modelo.
 
-- O conjunto de **teste** será usado para avaliar o desempenho do modelo (separados para não serem usados no treinamento).
+- **Estratificação**: Foi usado o parâmetro `stratify=y` para garantir que a proporção de fraudes (minúscula) seja mantida nos conjuntos de treino e teste.
 
- - **Estratificação**: Deve-se usar o parâmetro `stratify=y` para garantir que a proporção de fraudes (minúscula) seja mantida nos conjuntos de treino e teste.
+### 5. TREINAMENTO & MLOPS
 
-#### **4.4 BALANCEAMENTO DOS DADOS (SAMPLING)**
+O objetivo desta etapa é treinar o modelo para distinguir transações legítimas de fraudes e garantir o gerenciamento profissional do ciclo de vida desse modelo.
 
-- Como a classe 1 (Fraude) é minúscula, o Random Forest precisa de ajuda para dar peso às fraudes.
+#### 5.1 **Fluxo do Pipeline de Treinamento**
 
-- **Balanceamento dos dados** é uma técnica que visa equilibrar a proporção de fraudes (minúscula) nos conjuntos de treino e teste.
+O script `src/models/train.py` executa os seguintes passos:
 
-**Opção A: Oversampling (SMOTE - Synthetic Minority Over-sampling Technique)**
+1.  **Carregamento:** Leitura de `X_train.csv` e `y_train.csv`.
+2.  **Balanceamento:** Aplicação de SMOTE (Geração de dados sintéticos).
+3.  **Limpeza:** Aplicação de Tomek Links (Refinamento de fronteiras).
+4.  **Treinamento:** Ajuste do Random Forest aos dados balanceados.
+5.  **Registro:** Salvamento dos artefatos e métricas no MLflow.
 
-- Em vez de apenas duplicar as fraudes existentes (o que causaria overfitting), o SMOTE cria "fraudes novas" artificiais.
+#### 5.2 **Técnicas de Modelagem**
 
- - Por meio de uma fraude real, avalia as fraudes "vizinhas" mais parecidas e cria um ponto intermediário entre elas. É como se ele interpolasse as características para criar uma fraude que "poderia existir".
+##### **A) Balanceamento de Dados (SMOTETomek)**
+Como a classe de fraude é minoritária, foi utilizado um método híbrido:
+-   **SMOTE (Oversampling):** Cria fraudes sintéticas interpolando exemplos existentes, ajudando o modelo a aprender a "região" da fraude.
+-   **Tomek Links (Undersampling):** Remove exemplos da classe majoritária que estão muito próximos da classe minoritária, limpando a fronteira de decisão e reduzindo ruído.
 
- - A vantagem é que não há perda de informação (você mantém todos os dados legítimos). A desvantagem é que pode criar dados ruidosos se as fraudes estiverem misturadas com transações legítimas, confundindo o modelo.
+##### **B) Algoritmo Random Forest**
+Foi utilizado um **Ensemble** de **Árvores de Decisão**:
+-   **Funcionamento:** Centenas de árvores "votam" na classificação. A maioria vence.
+-   **Vantagens:** Alta robustez contra overfitting e capacidade de capturar padrões não-lineares complexos, típicos de fraudes.
 
-**Opção B: Undersampling (Random Undersampling)**
+#### 5.3 **MLOps com MLflow**
 
-- Você joga fora aleatoriamente a maioria das transações legítimas até ficar com uma quantidade parecida com a de fraudes (ex: 50/50).
+O MLflow foi implementado para elevar o nível de maturidade do projeto, garantindo rastreabilidade e governança.
 
-- Se você tem 400 fraudes e 200.000 legítimas, você escolhe 400 legítimas aleatórias e descarta as outras 199.600.
+##### **5.3.1 Arquitetura Implementada**
+-   **Backend Store:** SQLite (`mlflow.db`) para metadados (rápido e leve).
+-   **Artifact Store:** Diretório local (`mlruns/`) para modelos e gráficos.
+-   **Model Registry:** Gerenciamento centralizado de versões de modelos.
 
-- A vantagem é que treinamento fica ultra-rápido e o modelo foca muito em distinguir as classes. A desvantagem é o perigo de jogar fora 99% dos dados legítimos. O modelo pode deixar de aprender padrões importantes das transações legítimas e começar a dar muito "Falso Positivo" (bloquear cartão de cliente bom).
+##### **5.3.2 O Produto do Treinamento**
 
-**Opção C: Pesos de Classe (Class Weights)**
+O resultado do treinamento gera dois artefatos principais:
 
-- Abordagem "matemática" que não mexe nos dados, isto é, não cria dados artificiais.
+1.  **Arquivo Binário (`model.pkl`)**:
+    -   É o formato tradicional (legacy). Contém todos os cálculos e caminhos que as 100 árvores aprenderam serializados.
+    -   Serve como **backup/fallback** caso o MLflow esteja indisponível.
 
-- Configura-se um algoritmo de modo que "Se errar uma transação legítima, a penalidade é 1, mas se errar uma fraude, a penalidade é 500". O resultado é que o algoritmo se esforça 500x mais para acertar as fraudes.
+2.  **Modelo Registrado no MLflow**:
+    -   O modelo é salvo no formato padrão do MLflow e registrado no **Model Registry** com versionamento automático (ex: `FraudDetectionRandomForest/Version 1`).
+    -   É o método **principal** de carregamento em produção, garantindo que a API sempre use a versão correta e aprovada.
 
-- A vantagem é que é computacionalmente eficiente e não altera a distribuição original dos dados. A desvantagem é que pode não ser suficiente se o desbalanceamento for extremo (ex: 1 fraude em 1 milhão).
+Ambos contêm a mesma inteligência (as árvores de decisão treinadas), mas o registro no MLflow oferece governança e facilidade de deploy.
 
-**Opção D: Métodos Híbridos (SMOTE + Tomek Links ou SMOTE + ENN)**
+##### **5.3.2 Alteração de Modelo (Baseline vs Produção)**
+Para garantir segurança na migração para MLOps:
 
-- Este é o método mais vencedor em competições de Machine Learning.
+1.  **Baseline (Legacy):** O antigo `model.pkl` foi registrado como `FraudDetectionBaseline` (v1).
+2.  **Produção (Novo):** O novo modelo treinado foi registrado como `FraudDetectionRandomForest` e promovido para **Production**.
+3.  **API Híbrida:** O `predictor.py` tenta carregar do MLflow Registry, mas se falhar usa o `model.pkl` local como fallback.
 
-- Inicialmente aplica-se a técnica de **OverSampling/Smote** para criar fraudes artificiais e equilibrar o jogo. Posteriormente, aplica-se uma técnica de limpeza (Ex: **Tomek Links**) para remover dados que ficaram "na fronteira" confusa entre fraude e não-fraude.
+##### **5.3.3 Validação da Alteração dos Modelos**
+Comparamos o modelo legado (`model.pkl`) com o novo modelo registrado `FraudDetectionRandomForest` no MLflow para garantir consistência:
 
-- O resultado é um aumento na quantidade de fraudes, contudo, remove-se a sujeira que o **OverSampling/SMOTE** criou, deixando a separação entre as classes mais limpa para o modelo.
+| Métrica | Produção (.pkl) | MLflow Registry | Diferença |
+| :--- | :--- | :--- | :--- |
+| **Recall (Fraude)** | 0.8105 | 0.8105 | +0.0000 |
+| **Precision (Fraude)** | 0.6063 | 0.6063 | +0.0000 |
+| **F1-Score (Fraude)** | 0.6937 | 0.6937 | +0.0000 |
+| **AUC-ROC** | 0.9786 | 0.9786 | +0.0000 |
 
-**Opção E: Detecção de Anomalias (Isolation Forest / One-Class SVM)**
+**Conclusão:** Os modelos são idênticos. A migração foi bem-sucedida e segura.
 
-- Há uma mudança na forma de pensar, em vez de classificar "A vs B", você treina o modelo apenas com transações normais, ou seja, o modelo aprende perfeitamente o que é o "comportamento normal" de um cliente e, consequentemente, identificará um comportamento que desvia muito desse padrão como anomalia (fraude).
-
-- Este método é aplicado quando há pouquíssimas fraudes (ou nenhuma) para treinar, ou quando os padrões de fraude mudam tão rápido que o modelo supervisionado fica obsoleto.
-
-### 5. TREINAMENTO DO MODELO
-
-- O objetivo desta etapa é fazer com que o computador aprenda a distinguir uma transação legítima de uma fraude usando o Random Forest Classifier.
-
-- **IMPORTANTE:** Antes de treinar o modelo, é importante implementar o ML Flow para monitorar e controlar o treinamento do modelo. O ML Flow constrói um histórico das versões dos treinos do modelo, com parâmetros e resultados obtidos, visando documentação e uso futuro
-
-#### 5.1. **Fluxo do Script `train.py`**:
-
-- **Leitura:** Carrega X_train.csv e y_train.csv.
-- **Sintetização:** Aplica o SMOTE para equilibrar as quantidades (50/50).
-- **Limpeza:** Aplica Tomek Links para remover as sobreposições.
-- **Treino:** O Random Forest é treinado sobre este novo conjunto de dados "limpo e equilibrado".
-- **Exportação:** Salva o model.pkl.
-
-#### 5.2. **Random Forest**
-- **O que é o Random Forest?**
-    - É um algoritmo de aprendizado de máquina do tipo "Ensemble" (Conjunto) que constrói uma "floresta" composta por múltiplas Árvores de Decisão. Cada árvore é treinada com uma parte diferente dos dados e, ao final, todas "votam". A classe que receber mais votos (Fraude ou Legítima) é a decisão final do modelo.
-    - Por exemplo, imagine que, em vez de perguntar a opinião de apenas um especialista (uma Árvore de Decisão), você pergunta a 100 especialistas diferentes. Cada um analisa partes diferentes dos dados. No final, eles fazem uma votação: se a maioria disser "Fraude", o modelo classifica como "Fraude". Isto torna o sistema muito mais robusto e menos propenso a erros bobos.
-- **Por que usar o Random Forest?**
-    - **Robustez (Menos Overfitting):** Enquanto uma única árvore de decisão tende a "decorar" os dados (overfitting), a combinação de muitas árvores reduz esse erro, criando um modelo que generaliza melhor para dados novos.
-    - **Captura de Padrões Complexos:** Consegue identificar relações não-lineares entre as variáveis, o que é essencial em fraudes onde o comportamento criminoso não segue uma regra simples.
-    - **Importância das Variáveis:** Permite identificar quais colunas (ex: V12, V14, V17, Amount) são as mais decisivas para detectar a fraude, oferecendo uma explicação do porquê o modelo tomou aquela decisão
-
-#### 5.3. **Tratamento do Desbalanceamento (SMOTETomek)**
-- **1ª Etapa: SMOTE (Oversampling)**
-    - O SMOTE não apenas duplica as fraudes. Ele olha para uma fraude real, identifica seus "vizinhos" e cria uma nova fraude em um ponto aleatório entre eles. Isso ajuda o modelo a aprender a região onde a fraude ocorre, em vez de decorar pontos específicos.
-- **2ª Etapa: Tomek Links (Cleaning/Undersampling)**
-    - Ao criar dados sintéticos, o SMOTE pode acabar gerando fraudes muito próximas de transações legítimas, criando uma "zona cinzenta" confusa. O Tomek Links identifica pares de pontos de classes diferentes que são os vizinhos mais próximos um do outro e remove o exemplo da classe majoritária (ou ambos). Isso limpa a fronteira de decisão.
-
-- **OBS:** A aplicação destas técnicas melhora a generalização, isto é, o modelo aprende fronteiras mais claras e precisas. 
-
-- **OBS:** Esta técnica foca no Recall, ou seja,  aumenta a presença da classe 1, tornando o Random Forest muito mais sensível a padrões de fraude que antes seriam ignorados como "ruído".
-
-#### 5.4. **O Produto do Treinamento (arquivo .pkl)**
-- O resultado do treinamento não é um código, mas um **arquivo binário `model.pkl`**. Este arquivo contém todos os cálculos e caminhos que as 100 árvores aprenderam.
-
-Este arquivo é o **produto** do treinamento e será carregado na API em produção evitando treinar o modelo novamente (demora e consome CPU). Você vai apenas carregar este arquivo e ele dará a resposta instantâneas às consultas.
-
-#### 5.5. **SCRIPT `train.py`**
-
-- A classe `SMOTETomek` verifica o dataset de treino, no qual havia pouquíssimas fraudes, e gera novas amostras baseadas na vizinhança das fraudes reais. Logo após "limpa" o dataset removendo pontos que ficaram muito sobrepostos, deixando a fronteira de decisão mais nítida para o Random Forest.
-
-- O Parâmetro `n_jobs=-1` garante que o computador use todos os núcleos do processador para terminar mais rápido.
-
-- A `class_weight` não foi usada porque após o método SMOTETomek, há uma proporção de 50% de fraudes e 50% de legítimas no dataset, ou seja, o modelo entende naturalmente a importância das duas classes.
-
-#### 5.6. **Configuração de Logs**
-
-- No script `train.py` foram configurados dois tipos de logs, os ***logs de terminal*** e os ***arquivos de log***. Os últimos foram configurados para serem escritos em um arquivo chamado `train.log` salvo na pasta `FraudDetection/logs`.
-
-
-`script train.py`
-
-
-```python
-# train.py
-# Treinamento do modelo com técnica híbrida SMOTE + Tomek Links
-# Elaborado por: phmcasimiro
-# Data: 2026-01-04
-
-import pandas as pd
-import joblib
-import os
-import logging
-from datetime import datetime
-from imblearn.combine import SMOTETomek
-from sklearn.ensemble import RandomForestClassifier
-
-#------------------------------------------------------------------------------------
-#---------------------- FUNÇÃO AUXILIAR - CONFIGURAÇÃO DE LOGS ----------------------
-#------------------------------------------------------------------------------------
-
-def configurar_logger(): # Configuração de Logs
-    os.makedirs("logs", exist_ok=True) # Cria o diretório logs se não existir
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") # Gera um timestamp
-    log_filename = f"logs/train_{timestamp}.log" # Nome do arquivo de log
-
-    # Configura o logger
-    logger = logging.getLogger("FraudDetectionTrain") # Cria o logger
-    logger.setLevel(logging.INFO) # Define o nível de logging
-
-    # Handler para Arquivo
-    file_handler = logging.FileHandler(log_filename) # Cria o handler para arquivo
-    file_handler.setFormatter(
-        logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    ) # Define o formato do log
-
-    # Handler para Console (Terminal)
-    console_handler = logging.StreamHandler() # Cria o handler para console
-    console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s")) # Define o formato do log
-
-    logger.addHandler(file_handler) # Adiciona o handler para arquivo
-    logger.addHandler(console_handler) # Adiciona o handler para console
-
-    return logger
-
-#------------------------------------------------------------------------------
-#---------------------- FUNÇÃO PRINCIPAL - TREINAR MODELO----------------------
-#------------------------------------------------------------------------------
-
-def treinar_modelo():  # Função principal para treinar o modelo
-    logger = configurar_logger() # Configuração de Logs
-    logger.info("Iniciando script de treinamento...")
-
-    # Caminhos dos arquivos gerados no preprocess.py
-    X_train_path = "src/data/X_train.csv"
-    y_train_path = "src/data/y_train.csv"
-
-    if not os.path.exists(X_train_path):  # Verifica se os arquivos de treino existem
-        logger.error("Arquivos de treino não encontrados. Execute o preprocess.py.")
-        return
-
-    try:
-        # 1. CARREGAR DADOS
-        logger.info("Carregando dados de treino...")
-        X_train = pd.read_csv(X_train_path) # Carrega os dados de treino
-        y_train = pd.read_csv(y_train_path).values.ravel() # Carrega os dados de treino
-        logger.info(f"Dados carregados. Shape original: {X_train.shape}")
-
-        # 2. APLICAR TÉCNICA HÍBRIDA (SMOTETomek) - OPÇÃO D
-        # Inicialmente o SMOTE cria dados sintéticos da classe minoritária (fraude)
-        # Posteriormente o Tomek Links remove os pares de pontos de classes diferentes muito próximos
-        logger.info("Aplicando SMOTETomek para balancear os dados (pode demorar)...")
-        smt = SMOTETomek(random_state=42)  # Inicializa o SMOTETomek
-        X_resampled, y_resampled = smt.fit_resample(X_train, y_train) # Aplica o SMOTETomek
-
-        logger.info(f"Dados originais: {len(X_train)} amostras")
-        logger.info(f"Dados após SMOTETomek: {len(X_resampled)} amostras")
-
-        # 3. CONFIGURAR E TREINAR O MODELO (RANDOM FOREST)
-        # Como os dados já estão balanceados pelo SMOTETomek,
-        # não usaremos o class_weight='balanced' aqui.
-        logger.info("Iniciando treinamento do Random Forest...")
-
-        n_estimators = 100 # Número de árvores
-        max_depth = 10 # Profundidade máxima das árvores
-
-        modelo = RandomForestClassifier(  # Inicializa o Random Forest
-            n_estimators=n_estimators,  # Número de árvores
-            max_depth=max_depth,  # Profundidade máxima das árvores
-            random_state=42,  # Estado aleatório para reproducibilidade
-            n_jobs=-1,  # Utiliza todos os núcleos do processador
-        )
-
-        logger.info(
-            f"Hiperparâmetros: n_estimators={n_estimators}, max_depth={max_depth}"
-        )
-
-        modelo.fit(X_resampled, y_resampled)  # Treina o Random Forest
-        logger.info("Treinamento concluído com sucesso!")
-
-        # 4. EXPORTAR O MODELO
-        os.makedirs("artifacts/models", exist_ok=True) # Cria o diretório artifacts/models se não existir
-        model_path = "artifacts/models/model.pkl" # Caminho do arquivo do modelo
-        joblib.dump(modelo, model_path) # Exporta o modelo
-        logger.info(f"Modelo exportado para: {model_path}")
-
-    except Exception as e:
-        logger.exception("Ocorreu um erro fatal durante o treinamento.")
-        raise e
-
-if __name__ == "__main__":
-    treinar_modelo()
-
-```
-
-
-### 6. **Avaliação do Modelo (Validação do Modelo)**
+### 6. **Avaliação e Validação do Modelo em Produção**
 
 - Nesta etapa, o objetivo é avaliar o desempenho do modelo treinado com dados que não foram usados no treinamento (x_teste, y_teste).
 
-- O objetivo é que o modelo seja capaz de prever corretamente as fraudes e transações legítimas em novos dados.
+#### **6.1 TAREFAS/ETAPAS (Automatizadas no `evaluate.py`)**
 
-OBS: VN = Verdadeiro Negativo, FP = Falso Positivo, FN = Falso Negativo, VP = Verdadeiro Positivo
+1.  **Execução do Script de Avaliação**
+    -   O script `src/models/evaluate.py` é executado, carregando o modelo (do MLflow ou local) e os dados de teste.
+    -   Todo o processo é rastreado automaticamente pelo MLflow.
 
-- **TAREFAS/ETAPAS**
+2.  **Cálculo de Métricas**
+    -   São calculadas as métricas: **Precision**, **Recall**, **F1-Score**, **Acurácia** e **AUC-ROC**.
+    -   Os valores são registrados no MLflow para comparação histórica.
 
-    1. Criar Script de Avaliação do Modelo
-    - Implementar o script (***src/models/evaluation.py***), carregar o modelo treinado (***artifacts/models/model.pkl***), carregar os dados de teste (***src/data/X_test.csv*** e ***src/data/y_test.csv***) e avaliar o desempenho do modelo.
+3.  **Geração de Artefatos Visuais** 
+    
+    -   **Matriz de Confusão:** Salva como imagem e registrada no MLflow.
+    -   **Curva ROC:** Gráfico da performance do classificador, também salvo e registrado.
+    -   **Relatório Técnico:** Arquivo de texto com o detalhamento das métricas. 
+    - **Armazenamento:** `artifacts/evaluation`
 
-    2. Gerar Matriz de Confusão Visual
-    - Utilizar matplotlib/seaborn para salvar um gráfico da matriz de confusão em artifacts/.
+#### **6.2 CONSIDERAÇÕES SOBRE AVALIAÇÃO DE FRAUDES**
 
-    3. Calcular Métricas de Avaliação (Precision, Recall, F1-Score, Acurácia, AUC-ROC)
-    - Gerar o relatório técnico de métricas focando na classe 1 (Fraudes).
-    - Salvar o relatório técnico em artifacts/.
+**LEGENDA:** 
 
-    4. Analisar Curva Precision-Recall
-    - Avaliar o equilíbrio entre bloquear fraudes e não bloquear transações legítimas.
-    - Salvar o gráfico da curva precision-recall em artifacts/. 
+`VN = Verdadeiro Negativo`
 
-#### CONSIDERAÇÕES SOBRE AVALIAÇÃO DE FRAUDES:
+`FP = Falso Positivo`
+
+`FN = Falso Negativo`
+
+`VP = Verdadeiro Positivo`
 
 - **ACCURACY**: 
 
-    - Fórmula: (VN + VP) / (VN + VP + FP + FN)
+    - Fórmula: `(VN+VP)/(VN+VP+FP+FN)`
 
     - Percentual de acertos totais (tanto de fraudes quanto de legítimas).
 
@@ -732,7 +462,7 @@ OBS: VN = Verdadeiro Negativo, FP = Falso Positivo, FN = Falso Negativo, VP = Ve
 
 - **PRECISION** 
 
-    - Fórmula: VP / (VP + FP)
+    - Fórmula: `VP/(VP+FP)`
 
     - Responde à pergunta: "De todas as vezes que o modelo deu alerta de fraude, quantas eram fraudes reais?".
 
@@ -743,7 +473,7 @@ OBS: VN = Verdadeiro Negativo, FP = Falso Positivo, FN = Falso Negativo, VP = Ve
 
 - **RECALL**
 
-    - Fórmula: VP / (VP + FN)
+    - Fórmula: `VP/(VP+FN)`
 
     - Responde à pergunta: "De todas as fraudes que realmente ocorreram, quantas o modelo conseguiu detectar?".
 
@@ -755,7 +485,7 @@ OBS: VN = Verdadeiro Negativo, FP = Falso Positivo, FN = Falso Negativo, VP = Ve
 
 - **F1-SCORE** 
 
-    - Fórmula: 2 * (Precision * Recall) / (Precision + Recall)
+    - Fórmula: `2*(Precision * Recall)/(Precision + Recall)`
 
     - Média Harmônica entre Precision e Recall
 
@@ -765,7 +495,7 @@ OBS: VN = Verdadeiro Negativo, FP = Falso Positivo, FN = Falso Negativo, VP = Ve
 
 - **AUC-ROC** 
 
-    - Fórmula: Área sob a curva ROC
+    - Fórmula: `Área sob a curva ROC`
 
     - A curva ROC plota a "Taxa de Verdadeiros Positivos" contra a "Taxa de Falsos Positivos" para diferentes limiares de decisão do modelo.
 
@@ -776,147 +506,6 @@ OBS: VN = Verdadeiro Negativo, FP = Falso Positivo, FN = Falso Negativo, VP = Ve
 
 **IMPORTANTE:** RECALL é considerado uma métrica primária de segurança (pois queremos pegar o ladrão), enquanto a PRECISION é a métrica de "qualidade de atendimento" (não irritar o cliente). 
 
-`evaluate.py`
-
-```python
-# evaluate.py
-# Avaliação e Validação do modelo treinado
-# Elaborado por: phmcasimiro
-# Data: 2026-01-05
-
-import pandas as pd
-import joblib
-import os
-import logging
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import datetime
-from sklearn.metrics import (
-    classification_report,
-    confusion_matrix,
-    roc_auc_score,
-    roc_curve,
-    ConfusionMatrixDisplay,
-)
-
-# ------------------------------------------------------------------------------------
-# ---------------------- FUNÇÃO AUXILIAR - CONFIGURAÇÃO DE LOGS ----------------------
-# ------------------------------------------------------------------------------------
-
-
-def configurar_logger():  # Configuração de logs
-    os.makedirs("logs", exist_ok=True)  # Criação do diretório de logs
-    timestamp = datetime.now().strftime(
-        "%Y%m%d_%H%M%S"
-    )  # Timestamp para o nome do arquivo de log
-    log_filename = f"logs/evaluate_{timestamp}.log"  # Nome do arquivo de log
-
-    logger = logging.getLogger("FraudDetectionEval")  # Logger
-    logger.setLevel(logging.INFO)  # Nível de logging
-
-    file_handler = logging.FileHandler(log_filename)  # Handler de arquivo
-    file_handler.setFormatter(
-        logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    )  # Formatação do log
-
-    console_handler = logging.StreamHandler()  # Handler de console
-    console_handler.setFormatter(
-        logging.Formatter("%(levelname)s: %(message)s")
-    )  # Formatação do log
-
-    logger.addHandler(file_handler)  # Adiciona o handler de arquivo ao logger
-    logger.addHandler(console_handler)  # Adiciona o handler de console ao logger
-    return logger
-
-
-# ------------------------------------------------------------------------------
-# ---------------------- FUNÇÃO PRINCIPAL - AVALIAR MODELO ---------------------
-# ------------------------------------------------------------------------------
-
-
-def avaliar_modelo():  # Avaliação e Validação do modelo treinado
-    logger = configurar_logger()
-    logger.info("Iniciando script de avaliação...")
-
-    # Caminhos dos arquivos
-    model_path = "artifacts/models/model.pkl"
-    X_test_path = "src/data/X_test.csv"
-    y_test_path = "src/data/y_test.csv"
-    output_dir = "artifacts/evaluation"
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Gerar timestamp para versionamento dos artefatos
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    if not all(os.path.exists(p) for p in [model_path, X_test_path, y_test_path]):
-        logger.error(
-            "Arquivos necessários não encontrados. Verifique o treino e o pré-processamento."
-        )
-        return
-
-    try:
-        # 1. CARREGAR MODELO E DADOS DE TESTE
-        logger.info("Carregando modelo e dados de teste...")
-        model = joblib.load(model_path)  # Carrega o modelo treinado
-        X_test = pd.read_csv(X_test_path)  # Carrega os dados de teste
-        y_test = pd.read_csv(y_test_path).values.ravel()  # Carrega os dados de teste
-
-        # 2. REALIZAR PREDIÇÕES
-        logger.info("Realizando predições no conjunto de teste...")
-        y_pred = model.predict(X_test)  # Realiza predições no conjunto de teste
-        y_probs = model.predict_proba(X_test)[:, 1]  # Probabilidades para a curva ROC
-
-        # 3. GERAR RELATÓRIO DE MÉTRICAS (Precision, Recall, F1)
-        report = classification_report(y_test, y_pred)  # Gera relatório de métricas
-        logger.info("\n" + report)
-
-        # Salvar relatório em texto com timestamp
-        report_filename = f"{output_dir}/metrics_report_{timestamp}.txt"
-        with open(report_filename, "w") as f:
-            f.write(report)
-        logger.info(f"Relatório salvo em: {report_filename}")
-
-        # 4. MATRIZ DE CONFUSÃO VISUAL
-        logger.info("Gerando Matriz de Confusão...")
-        cm = confusion_matrix(y_test, y_pred)  # Gera matriz de confusão
-        plt.figure(figsize=(8, 6))  # Define o tamanho da figura
-        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)  # Gera heatmap
-        plt.title(f"Matriz de Confusão - {timestamp}")  # Define o título
-        plt.xlabel("Predição do Modelo")  # Define o eixo x
-        plt.ylabel("Valor Real (Gabarito)")  # Define o eixo y
-        plt.savefig(f"{output_dir}/confusion_matrix_{timestamp}.png")  # Salva a imagem
-        plt.close()
-
-        # 5. CURVA ROC E AUC
-        logger.info("Calculando AUC-ROC...")
-        auc = roc_auc_score(y_test, y_probs)  # Calcula o AUC-ROC
-        logger.info(f"AUC-ROC Score: {auc:.4f}")  # Imprime o AUC-ROC
-
-        fpr, tpr, _ = roc_curve(y_test, y_probs)  # Calcula a curva ROC
-        plt.figure(figsize=(8, 6))  # Define o tamanho da figura
-        plt.plot(
-            fpr, tpr, label=f"Random Forest (AUC = {auc:.4f})"
-        )  # Plota a curva ROC
-        plt.plot(
-            [0, 1], [0, 1], "k--", label="Aleatório (AUC = 0.5)"
-        )  # Plota a curva ROC
-        plt.xlabel("Taxa de Falsos Positivos (1 - Especificidade)")  # Define o eixo x
-        plt.ylabel("Taxa de Verdadeiros Positivos (Recall)")  # Define o eixo y
-        plt.title(f"Curva ROC - {timestamp}")  # Define o título
-        plt.legend()  # Plota a legenda
-        plt.savefig(f"{output_dir}/roc_curve_{timestamp}.png")  # Salva a imagem
-        plt.close()
-
-        logger.info(f"Avaliação concluída! Resultados salvos em: {output_dir}")
-
-    except Exception as e:
-        logger.exception("Erro durante a avaliação.")
-        raise e
-
-
-if __name__ == "__main__":
-    avaliar_modelo()
-```
 
 #### RESULTADOS
 
@@ -1081,7 +670,7 @@ services:
 - **Resumo Conceitual:**
     - **Dockerfile:** É o arquivo de texto com as instruções passo a passo.
     - **Docker Image:** É o resultado do `build`. Um arquivo estático e imutável.
-    - **Docker Container:** É a execução da imagem (`run`). É possível executar vários containers a partir da mesma imagem.
+    - **Docker Container:** É a execução da imagem `run`. É possível executar vários containers a partir da mesma imagem.
     - **Docker Compose:** `docker-compose.yml` é o arquivo que coordena os containers. Garante que o app, o banco de dados e outros serviços estejam em execução e conectados corretamente.
 
 ### 7.2 **Comandos Docker**
@@ -1144,10 +733,10 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 #### 8.1 Panorama Geral do Deploy
 
 **1 - Contrato/Schemas Pydantic**
-    - Arquivo `src/schemas/schemas.py` garante que a API só receba dados no formato esperado, evitando erros devido a dados inválidos. 
+    - Arquivo `src/api/schemas.py` garante que a API só receba dados no formato esperado, evitando erros devido a dados inválidos. 
 
 **2 - Services**
-    - Arquivo `src/services/services.py` implementa a lógica de negócio (predição de fraude). Este script é uma interface entre as chamadas da internet na API e o modelo Estatístico de machine learning.
+    - Arquivo `src/models/predictor.py` implementa a lógica de negócio (predição de fraude). Este script é uma interface entre as chamadas da internet na API e o modelo Estatístico de machine learning.
 
 **3 - FastAPI**
     - Arquivo `src/api/main.py` implementa a API utilizando o framework **FastAPI**. É o servidor que fica "ouvindo" a internet. Quando recebe uma requisição de predição, ele valida com o Schema e chama a função de predição.
@@ -1184,7 +773,7 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 
 - O Pydantic é uma biblioteca que ajuda a validar e converter dados em Python. Ele é comumente usado para validar dados de entrada e saída em APIs.
 
-- O arquivo `src/schemas/schemas.py` define os contratos de entrada e saída da API. Em APIs, o cliente e o servidor precisam concordar exatamente com o formato dos dados ou nada funciona.
+- O arquivo `src/api/schemas.py` define os contratos de entrada e saída da API. Em APIs, o cliente e o servidor precisam concordar exatamente com o formato dos dados ou nada funciona.
 
 - ***TransactionInput***: Define o formato de entrada da API.
 - ***PredictionOutput***: Define o formato de saída da API.
@@ -1250,7 +839,7 @@ JSON Externo ➡️ TransactionInput (Validação) ➡️ Predictor (ML) ➡️ 
 
 #### 8.4 Serviço de Predição
 
-- O script `src/services/services.py` contém a lógica de predição. Seu objetivo é carregar o modelo de detecção de fraude uma única vez e oferecer uma função que recebe os dados da API e devolve a classficação.
+- O script `src/models/predictor.py` contém a lógica de predição. Seu objetivo é carregar o modelo de detecção de fraude uma única vez e oferecer uma função que recebe os dados da API e devolve a classficação.
 
 ##### 8.4.1 Considerações sobre o script de Predição
 
@@ -1558,7 +1147,7 @@ def test_predict_legitimate_transaction():
 
 
 
-- `test_predict_invalid_amount():` Testa o funcionamento do contrato Pydantic (src/schemas/schemas.py), isto é, se a API retorna um erro (422 Unprocessable Entity) quando recebe valores inválidos em um objeto JSON encaminhado por um request/consulta de um sistema externo.
+- `test_predict_invalid_amount():` Testa o funcionamento do contrato Pydantic (src/api/schemas.py), isto é, se a API retorna um erro (422 Unprocessable Entity) quando recebe valores inválidos em um objeto JSON encaminhado por um request/consulta de um sistema externo.
 
 ```python
 def test_predict_invalid_amount():
@@ -1691,7 +1280,7 @@ jobs:
 
 #### 9.2 **Implementação da API Key**
 - **Segurança das Credenciais (.env):**
-    - A chave de acesso (`API_KEY`) **não** é salva no código fonte. Ela é armazenada em um arquivo oculto `.env` que fica apenas no servidor e é ignorado pelo Git (`.gitignore`).
+    - A chave de acesso `API_KEY` **não** é salva no código fonte. Ela é armazenada em um arquivo oculto `.env` que fica apenas no servidor e é ignorado pelo Git `.gitignore`.
     - O arquivo `.env.example` serve como modelo para outros desenvolvedores.
     - No script `main.py` foram usadas as bibliotecas `python-dotenv` e `os.getenv` para ler essa senha de forma segura. 
     - Se a senha não existir, o sistema trava propositalmente (Fail Fast) para evitar brechas de segurança `main.py:L32-33`.
@@ -1703,7 +1292,7 @@ jobs:
 
 - **Atualização dos Testes:**
     - No `test_api.py:L24` foi feita uma atualização para carregar a chave real do ambiente de teste `test_api.py:L14-22` e enviá-la no cabeçalho das requisições .
-    - No `test_api.py:L144-185` foi adicionado um teste específico (`test_predict_unauthorized`) para garantir que a porta de segurança está trancada para invasores.
+    - No `test_api.py:L144-185` foi adicionado um teste específico `test_predict_unauthorized` para garantir que a porta de segurança está trancada para invasores.
 
 ```python
 # src/api/main.py
@@ -1770,12 +1359,14 @@ Modelos de Machine Learning degradam com o tempo (Data Drift). O padrão de frau
     -   Criar métricas de saúde da API (tempo de resposta, taxa de erros).
 
 2.  **Pipeline de CI/CD (Integração Contínua):**
-    -   Configurar automação (ex: GitHub Actions) para rodar os testes (`pytest`) a cada novo commit.
+    -   Configurar automação (ex: GitHub Actions) para rodar os testes `pytest` a cada novo commit.
     -   Automatizar o build da imagem Docker para garantir que o deploy seja sempre feito com uma versão testada e segura.
 
-### 11. **Atualização do Modelo (Retreino)**
+### 11. **Monitoramento do Modelo (Data Drift)**
 
-Definir uma política de atualização. Quando o monitoramento indicar queda na performance (ex: aumento de fraudes não detectadas), o pipeline de treinamento (Etapa 5) deve ser reexecutado com dados mais recentes para gerar um novo `model.pkl`.
+- 
+
+
 
 
 

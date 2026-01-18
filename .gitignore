@@ -20,3 +20,9 @@ src/data/y_test.csv
 src/data/y_train.csv
 src/data/creditcard.csv
 src/data/creditcard.zip
+# MLflow
+mlruns/
+mlflow.db
+mlflow.db-shm
+mlflow.db-wal
+data/*.db
