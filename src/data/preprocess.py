@@ -3,10 +3,8 @@
 # Elaborado por: phmcasimiro
 # Data: 02/01/2026
 
-import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import RobustScaler
-import os
 from src.data.pandera_schemas import validar_dados
 from src.data.db import load_data, save_data
 

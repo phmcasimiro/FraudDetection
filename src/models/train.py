@@ -4,7 +4,6 @@
 # Data: 2026-01-04
 # Atualizado: 2026-01-17 - Adicionado MLflow para tracking
 
-import pandas as pd
 import joblib
 import os
 import logging

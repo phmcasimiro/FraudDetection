@@ -30,7 +30,12 @@ jobs:
         pip install -r requirements.txt
         pip install pytest httpx # Ferramentas de teste
 
-    - name: 4. Rodar Testes de Validação (Pytest)
+    - name: 4. Lint com Ruff
+      run: |
+        pip install ruff
+        ruff check .
+
+    - name: 5. Rodar Testes Unitários e de Integração
       env:
         # Essa variável será substituída pelo valor secreto salvo em:
         # repositório > Settings > Secrets and variables > Actions
@@ -38,6 +43,6 @@ jobs:
       run: |
         pytest tests/
 
-    - name: 5. Validar Build do Docker # Verificar se o Dockerfile criado continua funcionando
+    - name: 6. Validar Build do Docker # Verificar se o Dockerfile criado continua funcionando
       run: |
         docker build -t fraud-app-test .

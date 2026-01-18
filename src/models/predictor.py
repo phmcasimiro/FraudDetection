@@ -7,13 +7,12 @@
 import joblib
 import pandas as pd
 import logging
+import mlflow.sklearn
+import os
 from src.api.schemas import TransactionInput
 
 # Configurar logs para rastrear o que acontece na predição
 logger = logging.getLogger(__name__)
-
-import mlflow.sklearn
-import os
 
 # Configurar URI do MLflow (caso não esteja configurada no ambiente)
 # Em produção real, isso viria de variável de ambiente

@@ -25,7 +25,7 @@ def register_baseline_if_needed(client):
     try:
         client.get_registered_model(BASELINE_MODEL_NAME)
         print(f"✅ Modelo '{BASELINE_MODEL_NAME}' já existe no registro.")
-    except:
+    except Exception:
         print(f"⚠️ Modelo '{BASELINE_MODEL_NAME}' não encontrado. Criando...")
         client.create_registered_model(BASELINE_MODEL_NAME)
 
@@ -89,7 +89,7 @@ def promote_latest_to_production(client):
 
 
 def test_load_production_model():
-    print(f"\n--- Testando Carregamento de Produção ---")
+    print("\n--- Testando Carregamento de Produção ---")
 
     model_uri = f"models:/{MODEL_NAME}/Production"
     print(f"Tentando carregar de: {model_uri}")

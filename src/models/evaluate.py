@@ -3,7 +3,6 @@
 # Elaborado por: phmcasimiro
 # Data: 2026-01-05
 
-import pandas as pd
 import joblib
 import os
 import logging
@@ -15,7 +14,6 @@ from sklearn.metrics import (
     confusion_matrix,
     roc_auc_score,
     roc_curve,
-    ConfusionMatrixDisplay,
 )
 from src.data.db import load_data
 

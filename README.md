@@ -556,17 +556,21 @@ Comparamos o modelo legado (`model.pkl`) com o novo modelo registrado `FraudDete
 
 ### 7. **INFRAESTRUTURA E PORTABILIDADE (DOCKER)**
 
-- Para garantir que o projeto seja executado de forma idêntica em qualquer ambiente (desenvolvimento, teste ou produção), foi implementada a conteinerização utilizando **Docker**, isto é, foi criada uma imagem do projeto que pode ser executada em qualquer ambiente que suporte Docker, eliminando o problema do "na minha máquina funciona" e isolando todas as dependências e configurações.
+Para garantir que o projeto seja executado de forma idêntica em qualquer ambiente (desenvolvimento, teste ou produção), foi implementada a conteinerização utilizando **Docker**, isto é, foi criada uma imagem do projeto que pode ser executada em qualquer ambiente que suporte Docker, eliminando o problema do _"na minha máquina funciona"_ e isolando todas as dependências e configurações.
 
-- **Por que o Docker nesta etapa do projeto?**
+**Por que o Docker nesta etapa do projeto?**
 
-- Considerando o Fluxo de MLOps, começamos pela **Experimentação**, que inclui experimentação, construção e avaliação do modelo de ML (Etapas 1 a 6). Seguimos para o Empacotamento (Etapa 7) e, por fim, para a Disponibilização como Serviço (Etapa 8).
+Considerando o Fluxo de MLOps, começamos pela **Experimentação**, que inclui experimentação, construção e avaliação do modelo de ML (Etapas 1 a 6). Seguimos para o Empacotamento (Etapa 7) e, por fim, para a Disponibilização como Serviço (Etapa 8).
 
-- **IMPLEMENTAÇÃO DO DOCKER:**
-    - **Imagem Base:** Utilização do `python:3.12-slim`.
-    - **Isolamento de Ambiente:** Gerenciamento automático de dependências via `requirements.txt`.
-    - **Configuração de PYTHONPATH:** Padronização dos caminhos de importação, resolvendo conflitos de módulos entre scripts.
-    - **Reprodutibilidade:** Garantia de que o pré-processamento, treino e avaliação ocorram sob as mesmas versões de bibliotecas (Pandas, Scikit-Learn, Pandera, etc).
+**IMPLEMENTAÇÃO DO DOCKER:**
+
+- **Imagem Base:** Utilização do `python:3.12-slim`.
+
+- **Isolamento de Ambiente:** Gerenciamento automático de dependências via `requirements.txt`.
+
+- **Configuração de PYTHONPATH:** Padronização dos caminhos de importação, resolvendo conflitos de módulos entre scripts.
+
+- **Reprodutibilidade:** Garantia de que o pré-processamento, treino e avaliação ocorram sob as mesmas versões de bibliotecas (Pandas, Scikit-Learn, Pandera, etc).
 
 - **CRIAR ARQUIVO `.dockerignore`**
 
@@ -661,68 +665,17 @@ services:
 
 ### 7.1 **Considerações sobre o Docker:**
  
-- Quando executamos o comando **`docker build`**, o Docker olha para o diretório _".../FraudDetection"_ e copia tudo o que está lá para dentro de uma `Imagem` estática.
-- Se o arquivo _src/models/evaluate.py_ for modificado depois disso, o Docker não vai reconhecer essa alteração, pois ele olha para a `Imagem` já construída, não para o seu diretório _"src"_ em tempo real.
-- **Conclusão:** Para atualizar o código dentro do Docker, temos dois caminhos:
-        1.  Rodar **`docker build`** novamente para "tirar uma nova foto" (recriar a imagem).
-        2.  Utilizar o **`docker-compose`**, que configuramos para criar um "espelho" (Volume) entre sua pasta local e a pasta _"/app"_ do container. Assim, qualquer alteração no seu código reflete instantaneamente lá dentro.
+- O projeto roda dentro de containers Docker para garantir que funcione igual em qualquer máquina.
+- Utilizamos o **Docker Compose** para orquestrar a aplicação e criar um volume (espelho) entre sua pasta local e o container, permitindo desenvolvimento em tempo real.
 
-- **Resumo Conceitual:**
-    - **Dockerfile:** É o arquivo de texto com as instruções passo a passo.
-    - **Docker Image:** É o resultado do `build`. Um arquivo estático e imutável.
-    - **Docker Container:** É a execução da imagem `run`. É possível executar vários containers a partir da mesma imagem.
-    - **Docker Compose:** `docker-compose.yml` é o arquivo que coordena os containers. Garante que o app, o banco de dados e outros serviços estejam em execução e conectados corretamente.
+- Para um guia completo de comandos, gerenciamento e resolução de problemas (troubleshooting), consulte o nosso **[Guia de Docker](docs/docker.md)**.
 
-### 7.2 **Comandos Docker**
+### 7.2 **Comandos Rápidos**
 
-#### 7.2.1 **Construção (Build)**
-- `docker build -t fraud-detection-app .`
-    - Cria a **Imagem** (a "foto" estática) do seu projeto a partir do Dockerfile.
-
-#### 7.2.2 **Execução (Run) e Parada (Down)**
-- `docker run -it fraud-detection-app`
-    - Cria e inicia um container isolado baseado na imagem. **Não** tem sincronização de arquivos (se mudar o código, ele não vê).
-- `docker-compose down`: 
-    - Para e remove o container.
-
-- `docker-compose up --build -d`
-    - Constrói a imagem (se tiver mudanças), cria o container com as configurações do [docker-compose.yml](cci:7://file:///home/pedro/Documentos/Projects/FraudDetection/docker-compose.yml:0:0-0:0) (incluindo o espelho/volume) e deixa rodando em segundo plano.
-
-#### 7.2.3 **Gerenciamento**
-- `docker images`
-    - Lista todas as imagens salvas no seu computador.
-- `docker rmi <image_id>`
-    - Apaga uma imagem do disco.
-- `docker ps`
-    - Lista os containers que estão rodando agora.
-- `docker ps -a`
-    - Lista todos os containers (inclusive os parados/desligados).
-- `docker stop <container_id>`
-    - Desliga um container suavemente.
-- `docker rm <container_id>`
-    - Apaga um container parado.
-
-#### 7.2.4 **Logs**
-- `docker logs <container_id>`
-    - Exibe os logs de um container.
-- `docker-compose logs -f app`
-    - Exibe os logs do container "app" em tempo real.
-
-
-```bash
-(venv) pedro@HP-246-G6-PC:~/Documentos/Projects/FraudDetection$ docker images
-REPOSITORY            TAG       IMAGE ID       CREATED        SIZE
-fraud-detection-app   latest    689e660d5481   12 hours ago   1.42GB
-
-(venv) pedro@HP-246-G6-PC:~/Documentos/Projects/FraudDetection$ docker ps -a
-CONTAINER ID   IMAGE                 COMMAND   CREATED             STATUS                         PORTS     NAMES
-1919787ad322   fraud-detection-app   "bash"    About an hour ago   Exited (0) About an hour ago             modest_ellis
-567e69a3149f   fraud-detection-app   "bash"    12 hours ago        Exited (130) 12 hours ago                cranky_pascal
-
-(venv) pedro@HP-246-G6-PC:~/Documentos/Projects/FraudDetection$ docker ps
-CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
-
-```
+- **Iniciar:** `docker-compose up --build -d`
+- **Parar:** `docker-compose down`
+- **Logs:** `docker-compose logs -f app`
+- **Status:** `docker ps`
 
 ### 8. **Deploy do Modelo (Produção)**
 
@@ -730,7 +683,7 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 
 - Sem o Deploy, o modelo de ML é apenas um arquivo inútil. Com o Deploy, o modelo se torna um serviço web acessível via API.
 
-#### 8.1 Panorama Geral do Deploy
+#### **8.1 Panorama Geral do Deploy**
 
 **1 - Contrato/Schemas Pydantic**
     - Arquivo `src/api/schemas.py` garante que a API só receba dados no formato esperado, evitando erros devido a dados inválidos. 
@@ -755,7 +708,7 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 **7 - Segurança e Autenticação**
     - Implementação de barreiras de segurança (como API Keys ou OAuth2) para garantir que apenas clientes autorizados (ex: o sistema do banco) possam enviar transações para análise, protegendo o modelo contra uso indevido.
 
-#### 8.2 Exemplo API FraudDetection
+#### **8.2 Exemplo API FraudDetection**
 
 - Se um sistema bancário enviar um JSON para a API:
 
@@ -769,7 +722,7 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 { "is_fraud": 1, "probability": 0.98, "status": "ALTO RISCO" }
 ```
 
-#### 8.3 - Schemas (Pydantic)
+#### **8.3 - Schemas (Pydantic)**
 
 - O Pydantic é uma biblioteca que ajuda a validar e converter dados em Python. Ele é comumente usado para validar dados de entrada e saída em APIs.
 
@@ -785,131 +738,42 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
     - `ge`: Indica que o campo deve ser maior ou igual a um valor.
     - `nullable`: Indica que o campo pode ser nulo.
 
-```python
-from pydantic import BaseModel, Field
-from typing import Optional
+##### **Resumo do Fluxo:**
 
-class TransactionInput(BaseModel):
-    """
-    Schema de entrada para uma única transação de cartão de crédito.
-    Inclui as 30 features que o modelo Random Forest espera.
-    """
-    Time: float = Field(..., description="Segundos decorridos desde a primeira transação", example=406.0)
-    V1: float = Field(..., example=-1.359807)
-    V2: float = Field(..., example=-0.072781)
-    V3: float = Field(..., example=2.536347)
-    V4: float = Field(..., example=1.378155)
-    V5: float = Field(..., example=-0.338321)
-    V6: float = Field(..., example=0.462388)
-    V7: float = Field(..., example=0.239599)
-    V8: float = Field(..., example=0.098698)
-    V9: float = Field(..., example=0.363787)
-    V10: float = Field(..., example=0.090794)
-    V11: float = Field(..., example=-0.551600)
-    V12: float = Field(..., example=-0.617801)
-    V13: float = Field(..., example=-0.991390)
-    V14: float = Field(..., example=-0.311169)
-    V15: float = Field(..., example=1.468177)
-    V16: float = Field(..., example=-0.470401)
-    V17: float = Field(..., example=0.207971)
-    V18: float = Field(..., example=0.025791)
-    V19: float = Field(..., example=0.403993)
-    V20: float = Field(..., example=0.251412)
-    V21: float = Field(..., example=-0.018307)
-    V22: float = Field(..., example=0.277838)
-    V23: float = Field(..., example=-0.110474)
-    V24: float = Field(..., example=0.066928)
-    V25: float = Field(..., example=0.128539)
-    V26: float = Field(..., example=-0.189115)
-    V27: float = Field(..., example=0.133558)
-    V28: float = Field(..., example=-0.021053)
-    Amount: float = Field(..., ge=0, description="Valor da transação (deve ser >= 0)", example=149.62)
+```mermaid
+graph LR
+    Step1["1. Sistema Externo\n(Envia JSON)"]
+    Step2["2. Validação Pydantic\n(Verifica Regras)"]
+    Step3["3. Predictor Service\n(Calcula Risco)"]
+    Step4["4. Resposta API\n(JSON Final)"]
 
-class PredictionOutput(BaseModel):
-    """
-    Schema de saída da API com o resultado da classificação.
-    """
-    is_fraud: int = Field(..., description="0 para Legítima, 1 para Fraude")
-    probability: float = Field(..., description="Probabilidade da transação ser fraude")
-    status: str = Field(..., description="Mensagem descritiva do resultado")
+    Step1 -->|"Transação"| Step2
+    Step2 -->|"Dados OK"| Step3
+    Step3 -->|"Resultado"| Step4
+    
+    style Step1 fill:#2c3e50,stroke:#34495e,stroke-width:2px,color:#fff
+    style Step2 fill:#4a148c,stroke:#6a1b9a,stroke-width:2px,color:#fff
+    style Step3 fill:#4a148c,stroke:#6a1b9a,stroke-width:2px,color:#fff
+    style Step4 fill:#2c3e50,stroke:#34495e,stroke-width:2px,color:#fff
 ```
 
-##### Resumo do Fluxo: 
-JSON Externo ➡️ TransactionInput (Validação) ➡️ Predictor (ML) ➡️ PredictionOutput (Resposta)
+#### **8.4 Serviço de Predição**
 
-#### 8.4 Serviço de Predição
+- O script `src/models/predictor.py` contém a lógica de predição. Seu objetivo é carregar o modelo de detecção de fraude de forma inteligente (priorizando o MLflow Registry) e oferecer uma função que recebe os dados da API e devolve a classificação.
 
-- O script `src/models/predictor.py` contém a lógica de predição. Seu objetivo é carregar o modelo de detecção de fraude uma única vez e oferecer uma função que recebe os dados da API e devolve a classficação.
+##### **8.4.1 Considerações sobre o script de Predição**
 
-##### 8.4.1 Considerações sobre o script de Predição
-
-- **Carregamento Único (In-Memory)**: O ***joblib.load*** está dentro do ***__init__*** a fim de que o modelo seja carregado uma única vez na RAM, quando a API for implementada em produção. Isso evita carregar o modelo do disco a cada nova transação, o que levaria muito tempo. 
+- **Carregamento Híbrido (MLflow + Fallback)**:
+    - O serviço foi projetado para buscar sempre a versão de **Produção** do modelo diretamente do **MLflow Model Registry**. Isso garante que a API esteja sempre usando a versão mais aprovada e auditada.
+    - Caso o MLflow esteja indisponível, ele executa um **Fallback** automático, carregando o modelo `model.pkl` local (serializado via `joblib`).
+    - Todo esse processo ocorre no `__init__`, garantindo que o modelo seja carregado apenas uma vez na memória RAM (Singleton), evitando latência a cada nova transação.
 
 - **model_dump()**: Esse método do Pydantic transforma o objeto JSON que a API recebeu em um dicionário Python puro, que o Pandas aceita facilmente para criar o DataFrame.
 
-- **Probabilidade vs Classe**: O modelo de detecção de fraude (Random Forest) não classifica em 0 ou 1, legítima ou fraude. Ele gera um percentual de probabilidade de fraude, por exemplo, _"92% de certeza que é fraude"_. Para sistemas financeiros, esse número é mais valioso que o 0 ou 1 seco.
-
-```python
-# predictor.py
-# Arquivo com a lógica de predição
-# Elaborado por phmcasimiro
-# Data: 10/01/2026
+- **Probabilidade vs Classe**: O modelo de detecção de fraude (Random Forest) não classifica apenas em 0 ou 1. Ele gera um percentual de probabilidade (ex: _"92% de chance de fraude"_). Para sistemas financeiros, esse score de risco é mais valioso para tomada de decisão (bloqueio automático vs análise humana) do que a classificação binária simples.
 
 
-import joblib
-import pandas as pd
-import logging
-from src.schemas.schemas import TransactionInput
-
-# Configurar logs para rastrear o que acontece na predição
-logger = logging.getLogger(__name__)
-
-class FraudPredictor:
-    def __init__(self, model_path: str = "artifacts/models/model.pkl"):
-        """
-        Ao iniciar, o serviço carrega o modelo para a memória.
-        Isso evita ler o arquivo do disco a cada nova transação.
-        """
-        try:
-            self.model = joblib.load(model_path)
-            logger.info(f" Modelo carregado com sucesso de: {model_path}")
-        except Exception as e:
-            logger.error(f"Erro ao carregar o modelo: {e}")
-            raise e
-
-    def predict(self, data: TransactionInput):
-        """
-        Recebe os dados validados pelo Pydantic, transforma em DataFrame
-        e solicita a predição ao Random Forest.
-        """
-        # 1. Converter o objeto Pydantic em um dicionário e depois em DataFrame
-        df_input = pd.DataFrame([data.model_dump()])
-
-        # 2. Realizar a predição de classe (0 ou 1)
-        prediction = self.model.predict(df_input)[0] # 0 (Legítima) ou 1 (Fraude)
-
-        # 3. Calcular a probabilidade de ser fraude
-        # [0, 1] -> [Legítima, Fraude] -> Utilizou-se o índice 1 que é a probabilidade de ser fraude
-        probability = self.model.predict_proba(df_input)[0][1]
-
-        # 4. Definir uma mensagem de status baseada na probabilidade
-        if probability > 0.8:
-            status = "Risco Crítico: Bloqueio Imediato"
-        elif probability > 0.5:
-            status = "Risco Moderado: Requer Análise Humana"
-        else:
-            status = "Transação Aprovada"
-
-        return {
-            "is_fraud": int(prediction),
-            "probability": float(probability),
-            "status": status
-        }
-
-# Instância única (Singleton) para ser usada pela API
-predictor = FraudPredictor()
-```
-#### 8.5 API (FastAPI)
+#### **8.5 API (FastAPI)**
 
 - **O que é uma API?**
     - API (Application Programming Interface) é um conjunto de regras que permite que diferentes softwares se comuniquem. No caso desta API, é a interface que viabiliza um site ou aplicativo enviar dados de uma transação e receber resposta se a transação é fraude ou legítima, sem precisar conhecer o código complexo do modelo.
@@ -923,94 +787,6 @@ predictor = FraudPredictor()
 - **Implementação da API (FastAPI) e do Servidor de Aplicações (Uvicorn)?**
     - A API (FastAPI) foi configurada no arquivo `src/api/main.py`.
     - O Servidor de Aplicação (Uvicorn) foi configurado no arquivo `src/api/main.py`, mas iniciado dentro do container Docker no arquivo `docker-compose.yml` com Hot-Reload ativado.
-
-```python
-# src/api/main.py
-# API Principal usando FastAPI
-# Elaborado por phmcasimiro
-# Data: 10/01/2026
-
-from fastapi import FastAPI, HTTPException
-from src.schemas.schemas import TransactionInput, PredictionOutput
-from src.services.predictor import predictor
-import logging
-
-# Configurar Logs da API
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("api")
-
-# Inicializar App
-app = FastAPI(
-    title="API Detecção de Fraudes",
-    description="API para detecção de fraudes em transações de cartão de crédito.",
-    version="1.0.0",
-)
-# Endpoint de Health Check
-@app.get("/", tags=["Health Check"])
-def read_root():
-    """
-    Endpoint raiz para verificar se a API está online.
-    """
-    return {"message": "API Detecção de Fraudes está online!", "status": "online"}
-
-# Endpoint de Predição
-@app.post("/predict", response_model=PredictionOutput, tags=["Prediction"])
-def predict_fraud(transaction: TransactionInput):
-    """
-    Endpoint para predição de fraude.
-    Recebe dados da transação e retorna probabilidade de ser fraude.
-    """
-    try:
-        logger.info("Recebendo nova transação para análise.")
-        result = predictor.predict(transaction)
-        logger.info(f"Predição realizada com sucesso: {result['status']}")
-        return result
-    except Exception as e:
-        logger.error(f"Erro durante a predição: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Erro interno no servidor: {str(e)}"
-        )
-
-```
-- **Configuração do Docker**
-    - O Docker foi configurado no arquivo `docker-compose.yml`.
-    - O Uvicorn foi configurado no arquivo `src/api/main.py`, mas iniciado dentro do container Docker no arquivo `docker-compose.yml` com Hot-Reload ativado.
-
-```bash
-# docker-compose.yml
-# Criado por phmcasimiro
-# Data: 2026-01-09
-
-version: '3.8'
-
-services:
-  app:
-    build: . # Indica ao Compose para usar o Dockerfile da pasta atual.
-
-    container_name: fraud_detection_container # Nome do container.
-
-    # Sincronização em tempo real (Volumes)
-    #Atualizações nos diretórios e scripts serão refletida instantaneamente no container Docker.
-    volumes:
-      - .:/app # O ponto (.) é máquina local, e /app é o container. 
-      
-    stdin_open: true # Mantém o container aberto para comandos interativos
-
-    tty: true # Mantém o container aberto para comandos interativos
-
-    # Expor a porta da API (Host:Container)
-    ports:
-      - "8000:8000"
-
-    # Comando para iniciar a API com Uvicorn (Reload ativado para dev)
-    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
-
-    environment:
-      - PYTHONPATH=/app
-      - PYTHONDONTWRITEBYTECODE=1
-      - PYTHONUNBUFFERED=1
-
-```
 
 - **Como subir a API?**
     - Com o `docker-compose.yml` configurado, basta rodar:
@@ -1041,7 +817,7 @@ services:
     5.  A API processará os dados e retornará a previsão (fraude ou legítima) logo abaixo. 
 
 
-#### 8.6 CI/CD (Testes Automatizados)
+#### **8.6 CI/CD (Testes Automatizados)**
 
 - **Panorama Geral sobre CI/CD**
     - De acordo com as boas práticas de desenvolvimento atuais, não basta apenas escrever código, é necessário garantir que o software esteja funcionando a cada edição, na sua conclusão e em cada alteração. O CI/CD (Continuous Integration/Continuous Delivery) é a esteira automática que valida e entrega do código.
@@ -1057,203 +833,36 @@ services:
     2.  **Agilidade:** Permite que o Cientista de Dados melhore o modelo e coloque em produção em minutos, com segurança, ou seja, sem intervenção humana.
     3.  **Documentação Viva:** Os testes devem simular exatamente como o sistema deve se comportar. Se o teste espera receber um `float`, isso pode ser interpretado como uma documentação de que o campo deve ser do tipo `float`.
 
-##### 8.6.1 Testes Automatizados
+##### **8.6.1 Testes Automatizados**
 
 - O script de testes está em `tests/test_api.py`
 - Utiliza a biblioteca `pytest` e o `TestClient` do FastAPI para simular requisições HTTP e testar a API
 
 - `TestClient(app)`: Neste trecho o FastAPI cria um "navegador virtual" (client), que permite enviar requisições para a API (app) sem precisar executar o servidor (sem uvicorn, sem docker), ou seja, é uma operação simulada na memória, tornando o teste ultra-rápido.
 
-```python
-from fastapi.testclient import TestClient
-from src.api.main import app
-
-# Cliente de teste do FastAPI (simula requisições HTTP)
-client = TestClient(app)
-```
-
-- `test_health_check():` Testa se a API está funcionando (online).
-
-```python
-def test_health_check():
-    """
-    Testa se o endpoint raiz (/) retorna 200 OK e status online.
-    """
-    response = client.get("/")  # Simula alguém acessando http://localhost:8000/
-    
-    # Assert (Afirmação): Espera um código de status 200 (OK), se não, o teste falha
-    assert response.status_code == 200  
-    
-    # Verificar se o JSON retornado é EXATAMENTE o que esperamos
-    assert response.json() == {
-        "message": "API Detecção de Fraudes está online!",
-        "status": "online",
-    }
-```
-
 - `test_predict_legitimate_transaction():` Testa uma transação legítima que deve ser processada com sucesso (200 OK).
-
-```python
-def test_predict_legitimate_transaction():
-    # Payload de teste (transação normal)
-    payload = {
-        "Time": 406.0,
-        "V1": -1.359807,
-        "V2": -0.072781,
-        "V3": 2.536347,
-        "V4": 1.378155,
-        "V5": -0.338321,
-        "V6": 0.462388,
-        "V7": 0.239599,
-        "V8": 0.098698,
-        "V9": 0.363787,
-        "V10": 0.090794,
-        "V11": -0.551600,
-        "V12": -0.617801,
-        "V13": -0.991390,
-        "V14": -0.311169,
-        "V15": 1.468177,
-        "V16": -0.470401,
-        "V17": 0.207971,
-        "V18": 0.025791,
-        "V19": 0.403993,
-        "V20": 0.251412,
-        "V21": -0.018307,
-        "V22": 0.277838,
-        "V23": -0.110474,
-        "V24": 0.066928,
-        "V25": 0.128539,
-        "V26": -0.189115,
-        "V27": 0.133558,
-        "V28": -0.021053,
-        "Amount": 149.62,
-    }
-    
-    # Simular um POST para /predict enviando o JSON
-    response = client.post("/predict", json=payload)
-    
-    # Verificar se a resposta é 200 OK
-    assert response.status_code == 200
-    data = response.json()
-    
-    # A resposta deve conter os campos is_fraud, probability e status
-    assert "is_fraud" in data
-    assert "probability" in data
-    assert "status" in data
-    
-    # Garantir que a probabilidade seja um número decimal (float)
-    assert isinstance(data["probability"], float)
-```
-
 
 
 - `test_predict_invalid_amount():` Testa o funcionamento do contrato Pydantic (src/api/schemas.py), isto é, se a API retorna um erro (422 Unprocessable Entity) quando recebe valores inválidos em um objeto JSON encaminhado por um request/consulta de um sistema externo.
 
-```python
-def test_predict_invalid_amount():
-    payload = {
-        "Time": 0.0,
-        "V1": 0.0,
-        "V2": 0.0,
-        "V3": 0.0,
-        "V4": 0.0,
-        "V5": 0.0,
-        "V6": 0.0,
-        "V7": 0.0,
-        "V8": 0.0,
-        "V9": 0.0,
-        "V10": 0.0,
-        "V11": 0.0,
-        "V12": 0.0,
-        "V13": 0.0,
-        "V14": 0.0,
-        "V15": 0.0,
-        "V16": 0.0,
-        "V17": 0.0,
-        "V18": 0.0,
-        "V19": 0.0,
-        "V20": 0.0,
-        "V21": 0.0,
-        "V22": 0.0,
-        "V23": 0.0,
-        "V24": 0.0,
-        "V25": 0.0,
-        "V26": 0.0,
-        "V27": 0.0,
-        "V28": 0.0,
-        "Amount": -50.00,  # Valor inválido!
-    }
 
-    response = client.post("/predict", json=payload) # Simula um POST para /predict enviando o JSON
 
-    assert response.status_code == 422 # Expectativa de falha (422 Unprocessable Entity)
-    
-    assert "Amount" in response.text # Verificar se a mensagem de erro menciona o campo Amount
-```
-
-#### 8.7 CI/CD com GitHub Actions
+#### **8.7 CI/CD com GitHub Actions**
 
 - Considerando que este é o primeiro projeto da Pós-Graduação, não implementamos CI/CD em etapas anteriores por priorizar a compreensão da construção do Modelo de Machine Learning e da API. Nesta etapa 8 (Deploy), implementaremos CI/CD com GitHub Actions para verificar se os scripts seguem as normas PEP8 (código limpo), verificar se a lógica do predictor.py está correta e verificar se a API está funcionando corretamente.
 
 - **Tipos de Testes:**
-    - **Linter:** Verificação da adequação do seu código às normas PEP8 (código limpo).
+    - **Linter:** Verificação da adequação do seu código às normas PEP8 (código limpo) utilizando a ferramenta **Ruff**.
     - **Unit Tests:** Verificação da adequação da lógica do predictor.py.
     - **Integration Tests:** Sobe a API e testa o endpoint /predict com um JSON real.
 
-- ** Implementação:**
+- **Implementação:**
     - Script de Implementação: `.github/workflows/main.yml`
     - Script de Testes: `tests/test_predict.py`
     - Atenção: A API_KEY deve ser configurada no seu repositório do GitHub porque não sobe para o GitHub.
     - Configuração de Variáveis de Ambiente: `secrets.API_KEY`
         - No seu repositório do GitHub: Settings > Secrets and variables > Actions.
         - Criar um ***New Repository Secret*** chamado `API_KEY` e colar o valor.
-
-Arquivo `.github/workflows/main.yml`:
-
-```bash
-# Nome do Workflow que aparecerá no GitHub
-name: FraudDetection CI/CD Pipeline
-
-# Gatilho: Quando o código será testado?
-on:
-  push:
-    branches: 
-      - '**'        # Rodar em TODAS as branches (incluindo sub-pastas)
-  pull_request:
-    branches: 
-      - main        # Rodar testes quando tentar mesclar algo na main
-
-jobs:
-  quality-assurance:
-    runs-on: ubuntu-latest # Máquina Linux gratuita do GitHub
-
-    steps:
-    - name: 1. Baixar o Código
-      uses: actions/checkout@v3
-
-    - name: 2. Configurar Python 3.12
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-
-    - name: 3. Instalar Dependências
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest httpx # Ferramentas de teste
-
-    - name: 4. Rodar Testes de Validação (Pytest)
-      env:
-        # O GitHub troca essa variável pelo valor secreto salvo no repositório > Settings > Secrets and variables > Actions na hora de rodar
-        API_KEY: ${{ secrets.API_KEY }} 
-      run: |
-        pytest tests/
-
-    - name: 5. Validar Build do Docker # Verificar se o Dockerfile criado continua funcionando
-      run: |
-        docker build -t fraud-app-test .
-```
-
 
 ### 9. **Autenticação e Segurança**
 
@@ -1294,84 +903,132 @@ jobs:
     - No `test_api.py:L24` foi feita uma atualização para carregar a chave real do ambiente de teste `test_api.py:L14-22` e enviá-la no cabeçalho das requisições .
     - No `test_api.py:L144-185` foi adicionado um teste específico `test_predict_unauthorized` para garantir que a porta de segurança está trancada para invasores.
 
-```python
-# src/api/main.py
+### 10. **Monitoramento de Performance (Infraestrutura e Software)**
 
-# 1. Carregar senha segura do .env
-load_dotenv()
-API_KEY = os.getenv("API_KEY")
-if not API_KEY:
-    raise ValueError("ERROR: A variável de ambiente API_KEY não está configurada.")
+- Este monitoramento foca na saúde da API enquanto sistema web e responde à pergunta: "O sistema está disponível e rápido para o usuário?"
 
-# 2. Configurar o esquema de segurança (Header)
-API_KEY_NAME = "access_token"
-api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+#### 10.1 **Métricas de Monitoramento de Performance**
 
-# 3. Criar a dependência de validação
-async def get_api_key(api_key_header: str = Security(api_key_header)):
-    if api_key_header == API_KEY:
-        return api_key_header
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Não foi possível validar as credenciais",
-    )
+- **Latência (Tempo de Resposta):** Mede o tempo de processamento de uma requisição pela API. Se o modelo de Random Forest começar a demorar 2 segundos em vez de 100ms, a experiência do usuário será ruim.
 
-# 4. Proteger o Endpoint
-@app.post("/predict", ...)
-def predict_fraud(transaction: TransactionInput, api_key: str = Security(get_api_key)):
-    # ...
-```
+- **Taxa de Erros (HTTP 4xx e 5xx):** Monitora quantas requisições falham. Por exemplo, um aumento nos erros 500 pode indicar que o container Docker está ficando sem memória ou que o arquivo .pkl foi corrompido.
 
-```python
-# tests/test_api.py
+- **Throughput (Vazão):** Quantas predições por segundo a API está processando. Ajuda a decidir a necessidade de escalar o container Docker para mais instâncias.
 
-# 1. Carregar senha para os testes
-load_dotenv()
-API_KEY = os.getenv("API_KEY")
-HEADERS = {"access_token": API_KEY}
+- **Uso de Recursos (CPU/RAM):** Verifica se o carregamento do modelo está "pesando" no servidor. Redes Neurais tendem a consumir muita RAM, enquanto Random Forests são mais leves, mas exigem monitoramento de CPU.
 
-# 2. Testar acesso autorizado (Com chave)
-def test_predict_legitimate_transaction():
-    # ...
-    response = client.post("/predict", json=payload, headers=HEADERS)
-    assert response.status_code == 200
+#### 10.2 **Planejamento de Implementação de Monitoramento de Performance**
 
-# 3. Testar acesso negado (Sem chave)
-def test_predict_unauthorized():
-    # ...
-    response = client.post("/predict", json=payload)
-    assert response.status_code == 403
-    assert response.json() == {"detail": "Não foi possível validar as credenciais"}
-```
+- **IMPORTANTE:**
+    - Optou-se por não implementar o Monitoramento de Performance visto que este projeto é um projeto de estudo e não tem um ambiente de produção, contudo, o planejamento descrito abaixo é válido para projetos de produção.
 
-### 10. **CI/CD com GitHub Actions**
+- **OBJETIVO:**
+    - Implementar um monitoramento profissional para rastrear latência da API, taxas de erro, throughput e recursos de infraestrutura (CPU/RAM).
 
-- 
+- **ARQUITETURA:**
+    - **Prometheus:** Banco de dados de séries temporais para coletar e armazenar métricas.
+    - **Grafana:** Plataforma de visualização para dashboards.
+    - **cAdvisor:** Ferramenta da Google para exportar métricas de uso de recursos de contêineres (CPU/RAM).
+    - **FastAPI Instrumentator:**  Ferramenta de monitoramento e coleta de dados de telemetria de aplicações construídas com o framework FastAPI. Utilizada para observar, possibilita rastrear chamadas, métricas de desempenho e erros, o que facilita a depuração e otimização, ou seja, ajuda a entender o que acontece dentro da API. 
 
-### 10. **Monitoramento e Manutenção (MLOps)**
+- **IMPLEMENTAÇÃO:**
+    - Adicionar o pacote ***Prometheus-Fastapi-Instrumentator*** ao arquivo ***requirements.txt***.
+    - Atualizar o script `src/api/main.py` para inicializar o Instrumentator.
+    - Expor o endpoint `/metrics`.
 
-Modelos de Machine Learning degradam com o tempo (Data Drift). O padrão de fraude muda e o modelo antigo deixa de ser eficaz.
+- **INFRAESTRUTURA (DOCKER COMPOSE):**
+    - Adicionar o serviço Prometheus (Porta 9090).
+    - Adicionar o serviço Grafana (Porta 3000).
+    - Adicionar o serviço cAdvisor (Porta 8080) para estatísticas de contêineres.
 
-#### **TAREFAS/ETAPAS**
+- **CONFIGURAÇÃO:**
+    - Crie o arquivo `prometheus.yml` para coletar dados dos alvos (aplicativo, cAdvisor).
 
-1.  **Monitoramento de Performance:**
-    -   Implementar logs de predição: Salvar o que entrou (input) e o que saiu (predição) para análise futura.
-    -   Criar métricas de saúde da API (tempo de resposta, taxa de erros).
+- **DOCUMENTAÇÃO:**
+    - Crie o arquivo `docs/monitoring.md` com instruções de configuração e guia do painel de controle.
 
-2.  **Pipeline de CI/CD (Integração Contínua):**
-    -   Configurar automação (ex: GitHub Actions) para rodar os testes `pytest` a cada novo commit.
-    -   Automatizar o build da imagem Docker para garantir que o deploy seja sempre feito com uma versão testada e segura.
+### 11. **Monitoramento de Modelo (Data Drift)**
 
-### 11. **Monitoramento do Modelo (Data Drift)**
+- O **MONITORAMENTO DO MODELO** foca na qualidade das predições ao longo do tempo. Ele responde à pergunta: "O modelo ainda é inteligente ou ficou 'burro'?"
 
-- 
+- O **DATA DRIFT (Desvio de Dados)** ocorre quando os dados que chegam na API hoje são estatisticamente diferentes dos dados de treino.
 
+- O **CONCEPT DRIFT (Desvio de Conceito)** ocorre quando a definição de "fraude" muda.
 
+- O **MODEL DECAY (Degradação)** é a queda natural das métricas conforme o modelo fica desatualizado.
 
+- Para implementar o monitoramento utilizados a ferramenta **Evidently AI** para detectar **Data Drift** (Desvio de Dados). A ferramenta compara estatisticamente os dados de Treino (Referência) com os novos dados que chegam na API . O resultado é um relatório HTML interativo que é salvo no MLflow e permite visualizar facilmente quais colunas mudaram de distribuição.
 
+#### 11.1 **Detalhes da Solução Implementada**
 
+- **ARQUITETURA:**
+    - **Evidently AI:** Biblioteca open-source utilizada para calcular métricas de drift e gerar relatórios visuais.
+    - **Dados de Referência:** O dataset de treino (`X_train`) armazenado no SQLite, representando o padrão aprendido pelo modelo.
+    - **Dados Atuais:** O dataset de teste (`X_test`) ou novos dados de produção, que são comparados contra a referência.
+    - **MLflow:** Atua como repositório de artefatos, armazenando os relatórios HTML gerados para histórico e auditoria.
 
+- **IMPLEMENTAÇÃO:**
+    - Adicionado o pacote `evidently` ao arquivo `requirements.txt`.
+    - Criado o script `src/models/monitor_drift.py` que carrega os dados do banco, simula um drift (para demonstração) e executa a análise.
+    - O script utiliza a API Legacy do Evidently (`DataDriftPreset`) para compatibilidade e robustez.
 
+- **INFRAESTRUTURA:**
+    - O monitoramento é executado sob demanda (Job) via container Docker ou ambiente local, não exigindo um serviço "always-on" dedicado como o Prometheus.
+    - Integra-se nativamente com a infraestrutura de banco de dados SQLite existente (`data/fraud_detection.db`).
+
+- **CONFIGURAÇÃO:**
+    - O script está configurado para utilizar o `DataDriftPreset`, que seleciona automaticamente os testes estatísticos adequados (ex: Kolmogorov-Smirnov para numéricos) com base no tipo de dado.
+
+- **DOCUMENTAÇÃO:**
+    - Criado o arquivo `docs/model_monitoring.md` com instruções passo-a-passo de execução e guia de interpretação dos gráficos de drift.
+
+Para mais detalhes sobre como executar e interpretar o monitoramento, consulte o guia: [docs/model_monitoring.md](docs/model_monitoring.md).
+
+### **12. PLANEJAMENTO DE DEPLOY EM NUVEM (GCP)**
+
+- Esse projeto **não foi implementado em nuvem**, abaixo está o planejamento.
+
+#### **12.1 CONSIDERAÇÕES E AJUSTES NECESSÁRIOS** 
+
+- Fazer deploy de uma aplicação de Machine Learning que usa Docker, banco de dados e MLflow exige alguns ajustes para sair do ambiente local (onde tudo é salvo no seu disco) para a nuvem (containers são temporários).
+
+- Considerando que vamos utilizar o **GCP**, precisamos nos atentar para o funcionamento Stateless do Cloud Run, ou seja, não podemos salvar dados no disco do container, porque o Container hospedado no Cloud Run nasce para responder uma requisição e morre logo após, ou seja, tudo que for salvo no container é perdido.
+
+#### **12.1.1 Preparação da Aplicação (O "Docker de Produção")**
+
+- Ajustar o Dockerfile para executar o servidor Uvicorn diretamente.
+
+- Garantir que a porta exposta seja a definida pela variável de ambiente $PORT (exigência do Cloud Run) ou fixar em 8000.
+
+#### **12.1.2 Externalização do Banco de Dados**
+
+- Como o SQLite é um arquivo local, ele será apagado a cada deploy. A solução é migrar de SQLite para PostgreSQL. Há duas soluções possíveis, a primeira é usar o **Cloud SQL** (gerenciado), a segunda é subir um container de Postgres em uma VM (Compute Engine). 
+
+- No código é necessário alterar a string de conexão no `src/data/db.py` e no MLflow para ler uma variável de ambiente `DATABASE_URL` em vez de fixar em sqlite:///....
+
+#### **12.1.3 Armazenamento de Artefatos (Modelos)**
+
+- Os **modelos .pkl** e os **gráficos do MLflow** também não podem ficar no disco local do container.
+
+A solução é usar os **Buckets** do Google Cloud Storage (GCS).
+
+- O MLflow tem suporte nativo, bastando configurar o `artifact_uri` para `gs://meu-bucket-mlflow/`.
+
+#### **12.1.4 Armazenamento do Modelo ML em Produção**
+
+- Treinar o modelo localmente, gerar o model.pkl, copiar para dentro da imagem Docker (COPY artifacts/model.pkl /app/artifacts/) e fazer o deploy.
+
+A vantagem desta solução é que a API não depende de conexão externa para carregar o modelo. É uma solução simples, rápida e robusta.
+
+A outra opção envolve o **MLflow Server Remoto**, ou seja, a API conecta num banco remoto e baixa o modelo do Bucket na inicialização. A vantagem é a possibilidade de trocar o modelo sem precisar fazer redeploy da API. A desvantagem é a complexidade de configurar a autenticação e rede.
+
+#### **12.1.5 O Pipeline de Deploy (CI/CD)**
+
+- Automatizar o processo usando GitHub Actions.
+
+    - **Build:** O GitHub monta a imagem Docker.
+    - **Push:** Envia a imagem para o Google Artifact Registry.
+    - **Deploy:** Manda o Cloud Run atualizar o serviço com a nova imagem.
 
 
 
