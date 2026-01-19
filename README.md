@@ -16,25 +16,16 @@ MBA IN GENERATIVE ARTIFICIAL INTELLIGENCE - PCDF & IBMEC
 7. [Evaluation | Avaliação](#6-avaliação-do-modelo-validação-do-modelo)
 8. [Infrastructure | Infraestrutura (Docker)](#7-infraestrutura-e-portabilidade-docker)
 9. [Deploy | Deploy do Modelo](#8-deploy-do-modelo-produção)
+10. [Auth & Security | Autenticação e Segurança](#9-autenticação-e-segurança)
+11. [Performance Monitoring | Monitoramento de Performance](#10-monitoramento-de-performance-infraestrutura-e-software)
+12. [Model Monitoring | Monitoramento de Modelo](#11-monitoramento-de-modelo-data-drift)
+13. [Cloud Roadmap | Planejamento de Deploy em Nuvem](#12-planejamento-de-deploy-em-nuvem-gcp)
 
 ### System Architecture Overview | Visão Geral da Arquitetura do Sistema
-
-**1. User Interface Layer**
-
-- Client/User: Makes HTTP POST requests to /predict endpoint
 
 **1. Camada de Interface do Usuário**
 
 - Cliente/Usuário: Faz requisições HTTP POST para o endpoint /predict
-
-**2. API Layer (FastAPI)**
-
-- FastAPI Application: Handles HTTP requests and responses
-
-- Authentication: API key-based authentication
-
-- Input Validation: Pydantic schemas for data validation
-
 
 **2. Camada de API (FastAPI)**
 
@@ -44,14 +35,6 @@ MBA IN GENERATIVE ARTIFICIAL INTELLIGENCE - PCDF & IBMEC
 
 - Validação de Entrada: Esquemas Pydantic para validação de dados
 
-**3. Application Core**
-
-- Prediction Service: Orchestrates the prediction workflow
-
-- Authentication: Secures API endpoints
-
-- Data Validation: Ensures input data quality
-
 **3. Núcleo da Aplicação**
 
 - Serviço de Predição: Orquestra o fluxo de trabalho de predição
@@ -59,14 +42,6 @@ MBA IN GENERATIVE ARTIFICIAL INTELLIGENCE - PCDF & IBMEC
 - Autenticação: Protege os endpoints da API
 
 - Validação de Dados: Garante a qualidade dos dados de entrada
-
-**4. Machine Learning Engine**
-
-- Model Artifact: Serialized Random Forest model (.pkl file) and MLflow Model Registry.
-
-- Data Preprocessing: Feature engineering and transformation
-
-- Random Forest Model: Trained ML model for predictions
 
 **4. Motor de Aprendizado de Máquina**
 
@@ -76,14 +51,6 @@ MBA IN GENERATIVE ARTIFICIAL INTELLIGENCE - PCDF & IBMEC
 
 - Modelo Random Forest: Modelo de aprendizado de máquina treinado para predições
 
-**5. Data Pipeline (Offline)**
-
-- **Data Storage:** SQLite database (`data/fraud_detection.db`) for structured storage.
-
-- **Data Processing:** ETL pipeline reads from DB, cleans/transforms, and saves back to DB.
-
-- **Model Training:** Offline training using data from SQLite.
-
 **5. Pipeline de Dados (Offline)**
 
 - **Armazenamento de Dados:** Banco de dados SQLite (`data/fraud_detection.db`) para armazenamento estruturado.
@@ -91,19 +58,6 @@ MBA IN GENERATIVE ARTIFICIAL INTELLIGENCE - PCDF & IBMEC
 - **Processamento de Dados:** Pipeline ETL lê do banco, limpa/transforma e salva de volta no banco.
 
 - **Treinamento do Modelo:** Treinamento offline usando dados do SQLite.
-
-
-**6. Request Flow**
-
-- **Request:** _User → POST /predict → FastAPI_
-
-- **Validation:** _API validates input using Pydantic schemas_
-
-- **Authentication:** _API key verification_
-
-- **Prediction:** _Service loads model, preprocesses data, runs inference_
-
-- **Response:** _Prediction result → JSON → User_
 
 **6. Fluxo de Requisição**
 
@@ -118,17 +72,13 @@ MBA IN GENERATIVE ARTIFICIAL INTELLIGENCE - PCDF & IBMEC
 - **Resposta:** _Resultado da previsão → JSON → Usuário_
 
 
-**7. Key Characteristics** 
+**7. Camada de Monitoramento**
 
-- **Separation of Concerns:** _Clear separation between API, business logic, and ML components_
+- Monitoramento de Data Drift: Evidently AI compara dados de produção com treino.
 
-- **Offline Training:** _Model training is separate from serving_
+- Rastreamento de Experimentos: MLflow armazena métricas, modelos e relatórios.
 
-- **Serialized Model:** _Uses pickle files for model persistence_
-
-- **RESTful Design:** _Standard API patterns for ML serving_
-
-**7. Características principais**
+**8. Características principais**
 
 - **Separação de responsabilidades:** _Separação clara entre os componentes da API, da lógica de negócios e do aprendizado de máquina_
 
@@ -139,8 +89,6 @@ MBA IN GENERATIVE ARTIFICIAL INTELLIGENCE - PCDF & IBMEC
 - **Design RESTful:** _Padrões de API padrão para disponibilização de aprendizado de máquina_
 
 ### 1. Data Pipeline & Training Architecture (Offline) | Arquitetura de Pipeline de Dados e Treinamento
-
-This workflow covers the data lifecycle from ingestion to model registration, running inside a Dockerized environment.
 
 Este fluxo de trabalho cobre o ciclo de vida dos dados, desde a ingestão até o registro do modelo, rodando dentro de um ambiente Dockerizado.
 
@@ -187,8 +135,6 @@ graph TD
 
 ### 2. Deployment & Inference Architecture (Online) | Arquitetura de Deploy e Inferência
 
-This workflow illustrates how the API serves predictions, abstracting the training complexity.
-
 Este fluxo de trabalho ilustra como a API fornece predições, abstraindo a complexidade do treinamento.
 
 ```mermaid
@@ -232,7 +178,6 @@ graph TD
 ```
 
 ---------------
-
 
 ### 1. Extração e Ingestão de Dados
 
@@ -858,7 +803,9 @@ graph LR
 
 - **Implementação:**
     - Script de Implementação: `.github/workflows/main.yml`
-    - Script de Testes: `tests/test_predict.py`
+    - Scripts de Testes: 
+        - `tests/test_predict.py` (Testes Unitários da Lógica de Predição)
+        - `tests/test_api.py` (Testes de Integração da API)
     - Atenção: A API_KEY deve ser configurada no seu repositório do GitHub porque não sobe para o GitHub.
     - Configuração de Variáveis de Ambiente: `secrets.API_KEY`
         - No seu repositório do GitHub: Settings > Secrets and variables > Actions.
